@@ -1,3 +1,15 @@
 <resources>
     <string name="app_name">chat</string>
+
+    <string name="item_profile">Perfil</string>
+    <string name="item_users">Usuarios</string>
+    <string name="item_chats">Chats</string>
+
+    <string name="tv_Title">Titulo</string>
+
+    <string name="optionEmail">Continuar con Email</string>
+    <string name="optionGoogle">Continuar con Google</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
