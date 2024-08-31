@@ -10,6 +10,18 @@
     <string name="optionEmail">Continuar con Email</string>
     <string name="optionGoogle">Continuar con Google</string>
 
+    <string name="txt_login">Login</string>
+    <string name="et_email">Correo Electronico</string>
+    <string name="et_password">Contraseña</string>
+    <string name="btn_enter">Ingresar</string>
+    <string name="txt_dont_account">No tienes una cuenta?</string>
+    <string name="tv_register">Registrarme</string>
+
+    <string name="txt_register">Registro</string>
+    <string name="et_name">Nombres</string>
+    <string name="et_R_password">Repita la contraseña</string>
+    <string name="btn_register">Registrar</string>
+
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

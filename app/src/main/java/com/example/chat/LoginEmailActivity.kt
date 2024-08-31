@@ -6,26 +6,27 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.chat.databinding.ActivityOptionsLoginBinding
+import com.example.chat.databinding.ActivityLoginEmailBinding
+import com.example.chat.fragments.RegisterEmailActivity
 
-class OptionsLoginActivity : AppCompatActivity() {
+class LoginEmailActivity : AppCompatActivity() {
 
-    private lateinit var binding:ActivityOptionsLoginBinding
 
+   private lateinit var binding : ActivityLoginEmailBinding
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_options_login)
 
-        binding = ActivityOptionsLoginBinding.inflate(layoutInflater)
+        binding = ActivityLoginEmailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        binding.optionEmail.setOnClickListener{
-            startActivity(Intent(applicationContext, LoginEmailActivity::class.java))
+        binding.tvRegister.setOnClickListener{
+            startActivity(Intent(applicationContext, RegisterEmailActivity::class.java))
         }
 
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_login_email)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)

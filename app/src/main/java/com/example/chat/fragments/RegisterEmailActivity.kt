@@ -1,31 +1,17 @@
-package com.example.chat
+package com.example.chat.fragments
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
-import com.example.chat.databinding.ActivityOptionsLoginBinding
+import com.example.chat.R
 
-class OptionsLoginActivity : AppCompatActivity() {
-
-    private lateinit var binding:ActivityOptionsLoginBinding
-
-
-
+class RegisterEmailActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContentView(R.layout.activity_options_login)
-
-        binding = ActivityOptionsLoginBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        binding.optionEmail.setOnClickListener{
-            startActivity(Intent(applicationContext, LoginEmailActivity::class.java))
-        }
-
+        setContentView(R.layout.activity_register_email)
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
