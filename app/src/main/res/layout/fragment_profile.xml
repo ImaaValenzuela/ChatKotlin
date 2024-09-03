@@ -3,15 +3,16 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".fragments.FragmentProfile">
 
-    <!-- TODO: Update blank fragment layout -->
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="PERFIL"
-        android:gravity="center"
-        android:textStyle="bold"
-        android:textSize="25sp"/>
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_logout"
+        android:text="@string/btn_logout"
+        android:textAllCaps="true"
+        android:layout_gravity="center"
+        app:cornerRadius="10dp"
+        android:layout_width="250dp"
+        android:layout_height="wrap_content"/>
 
 </FrameLayout>

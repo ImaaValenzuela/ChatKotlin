@@ -2,12 +2,12 @@ package com.example.chat
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.chat.databinding.ActivityLoginEmailBinding
-import com.example.chat.fragments.RegisterEmailActivity
 
 class LoginEmailActivity : AppCompatActivity() {
 
@@ -16,14 +16,6 @@ class LoginEmailActivity : AppCompatActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
-        binding = ActivityLoginEmailBinding.inflate(layoutInflater)
-        setContentView(binding.root)
-
-        binding.tvRegister.setOnClickListener{
-            startActivity(Intent(applicationContext, RegisterEmailActivity::class.java))
-        }
-
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContentView(R.layout.activity_login_email)
@@ -31,6 +23,14 @@ class LoginEmailActivity : AppCompatActivity() {
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
+        }
+
+        binding = ActivityLoginEmailBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        binding.tvRegister.setOnClickListener{
+            Log.d("RegisterClick", "Clicked on Register")
+            startActivity(Intent(applicationContext, RegisterEmailActivity::class.java))
         }
     }
 }

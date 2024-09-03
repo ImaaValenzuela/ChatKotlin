@@ -7,11 +7,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.chat.databinding.ActivityMainBinding
-import com.example.chat.fragments.FragmentChats
-import com.example.chat.fragments.FragmentProfile
-import com.example.chat.fragments.FragmentUsers
+import com.example.chat.fragments.ChatsFragment
+import com.example.chat.fragments.ProfileFragment
+import com.example.chat.fragments.UsersFragment
 import com.google.firebase.auth.FirebaseAuth
-import java.net.Authenticator
 
 class MainActivity : AppCompatActivity() {
 
@@ -57,12 +56,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun optionsLogin() {
         startActivity(Intent(applicationContext, OptionsLoginActivity::class.java))
+        finishAffinity()
     }
 
     private fun seeFragmentProfile() {
         binding.tvTitle.text = "Perfil"
 
-        val fragment = FragmentProfile()
+        val fragment = ProfileFragment()
         val fragmentTransaction = supportFragmentManager.beginTransaction()
         fragmentTransaction.replace(binding.fragmentFL.id, fragment, "Fragment Profile")
         fragmentTransaction.commit()
@@ -71,7 +71,7 @@ class MainActivity : AppCompatActivity() {
     private fun seeFragmentUsers () {
         binding.tvTitle.text = "Usuarios"
 
-        val fragment = FragmentUsers()
+        val fragment = UsersFragment()
         val fragmentTransaction = supportFragmentManager.beginTransaction()
         fragmentTransaction.replace(binding.fragmentFL.id, fragment, "Fragment Users")
         fragmentTransaction.commit()
@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity() {
     private fun seeFragmentChats () {
         binding.tvTitle.text = "Chats"
 
-        val fragment = FragmentChats()
+        val fragment = ChatsFragment()
         val fragmentTransaction = supportFragmentManager.beginTransaction()
         fragmentTransaction.replace(binding.fragmentFL.id, fragment, "Fragment Chats")
         fragmentTransaction.commit()
