@@ -24,6 +24,15 @@
     <string name="btn_register">Registrar</string>
 
     <string name="btn_logout">Cerrar Sesion</string>
+    
+    <string name="txt_names">Nombres: </string>
+    <string name="tv_names">--</string>
+    <string name="txt_email">Email: </string>
+    <string name="tv_email">--</string>
+    <string name="txt_prov">Proveedor: </string>
+    <string name="tv_prov">--</string>
+    <string name="txt_time_reg">Miembro desde: </string>
+    <string name="tv_time_reg">--</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
