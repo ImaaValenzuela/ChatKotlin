@@ -10,6 +10,7 @@ import android.view.ViewGroup
 import android.widget.Toast
 import com.bumptech.glide.Glide
 import com.example.chat.Const
+import com.example.chat.EditInformation
 import com.example.chat.OptionsLoginActivity
 import com.example.chat.R
 import com.example.chat.databinding.FragmentProfileBinding
@@ -42,6 +43,10 @@ class ProfileFragment : Fragment() {
         firebaseAuth = FirebaseAuth.getInstance()
 
         loadInfo()
+
+        binding.btnUpdateInfo.setOnClickListener {
+            startActivity(Intent(mContext, EditInformation::class.java))
+        }
 
         binding.btnLogout.setOnClickListener {
             firebaseAuth.signOut()

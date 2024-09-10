@@ -52,6 +52,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.database)
     implementation(libs.play.services.auth)
+    implementation("com.google.firebase:firebase-storage")
     implementation(libs.circleImage)
     implementation(libs.glide)
     testImplementation(libs.junit)
