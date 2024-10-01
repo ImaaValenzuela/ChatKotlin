@@ -28,6 +28,10 @@ class LoginEmailActivity : AppCompatActivity() {
         binding = ActivityLoginEmailBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        binding.tvRecoveryAccount.setOnClickListener{
+            startActivity(Intent(applicationContext, RecoverPassword::class.java))
+        }
+
         binding.tvRegister.setOnClickListener{
             Log.d("RegisterClick", "Clicked on Register")
             startActivity(Intent(applicationContext, RegisterEmailActivity::class.java))

@@ -17,6 +17,7 @@
     <string name="btn_enter">Ingresar</string>
     <string name="txt_dont_account">No tienes una cuenta?</string>
     <string name="tv_register">Registrarme</string>
+    <string name="tv_recovery_account">Recuperar Contraseña</string>
 
     <string name="txt_register">Registro</string>
     <string name="et_name">Nombres</string>
@@ -37,6 +38,10 @@
 
     <string name="txt_title_edit">Editar informacion</string>
     <string name="btn_update">Actualizar</string>
+
+    <string name="txt_recovery_pass">Recuperar Contraseña</string>
+    <string name="txt_insert_email">Ingrese su email para el envio de las instrucciones de recuperacion</string>
+    <string name="btn_submit">Enviar</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
