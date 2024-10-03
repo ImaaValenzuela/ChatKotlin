@@ -23,7 +23,9 @@
     <string name="et_name">Nombres</string>
     <string name="et_R_password">Repita la contraseña</string>
     <string name="btn_register">Registrar</string>
+
     <string name="btn_updateInfo">Actualizar</string>
+    <string name="btn_changePass">Cambiar Contraseña</string>
     <string name="btn_logout">Cerrar Sesion</string>
 
     <string name="txt_names">Nombres: </string>
@@ -42,6 +44,13 @@
     <string name="txt_recovery_pass">Recuperar Contraseña</string>
     <string name="txt_insert_email">Ingrese su email para el envio de las instrucciones de recuperacion</string>
     <string name="btn_submit">Enviar</string>
+    
+    <string name="txt_change_pass">Cambiar Contraseña</string>
+    
+    <string name="et_actual_pass">Contraseña actual</string>
+    <string name="et_new_pass">Contraseña nueva</string>
+    <string name="et_r_new_pass">Repetir contraseña nueva</string>
+    <string name="btn_ChangePass">Cambiar</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>

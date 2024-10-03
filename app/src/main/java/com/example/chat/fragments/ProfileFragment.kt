@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import com.bumptech.glide.Glide
+import com.example.chat.ChangePassword
 import com.example.chat.Const
 import com.example.chat.EditInformation
 import com.example.chat.OptionsLoginActivity
@@ -46,6 +47,10 @@ class ProfileFragment : Fragment() {
 
         binding.btnUpdateInfo.setOnClickListener {
             startActivity(Intent(mContext, EditInformation::class.java))
+        }
+
+        binding.btnChangePass.setOnClickListener {
+            startActivity(Intent(mContext, ChangePassword::class.java))
         }
 
         binding.btnLogout.setOnClickListener {
@@ -90,6 +95,10 @@ class ProfileFragment : Fragment() {
                             "${e.message}",
                             Toast.LENGTH_SHORT
                         ).show()
+                    }
+
+                    if(prov == "Email"){
+                        binding.btnChangePass.visibility = View.VISIBLE
                     }
                 }
 
