@@ -51,6 +51,10 @@
     <string name="et_new_pass">Contraseña nueva</string>
     <string name="et_r_new_pass">Repetir contraseña nueva</string>
     <string name="btn_ChangePass">Cambiar</string>
+    
+    <string name="item_uid">UID del usuario</string>
+    <string name="item_username">Username del usuario</string>
+    <string name="item_email">Email del usuario</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
