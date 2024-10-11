@@ -33,7 +33,7 @@
             android:id="@+id/et_name"
             android:hint="@string/et_name"
             android:layout_width="match_parent"
-            android:inputType="textPersonName"
+            android:inputType="textCapWords|textPersonName"
             android:layout_height="wrap_content"/>
         
     </com.google.android.material.textfield.TextInputLayout>

@@ -6,8 +6,24 @@
     android:layout_height="match_parent"
     tools:context=".fragments.UsersFragment">
 
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/TILSearchUser"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <EditText
+            android:id="@+id/et_search_user"
+            android:hint="@string/et_search_user"
+            android:inputType="textCapWords"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+
+    </com.google.android.material.textfield.TextInputLayout>
+    
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/RV_users"
+        android:layout_below="@id/TILSearchUser"
+        android:layout_marginTop="5dp"
         android:padding="5dp"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
