@@ -1,13 +1,16 @@
 package com.example.chat
 
 import android.content.Context
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.chat.chat.ChatActivity
 
 class UserAdapter (
     context : Context,
@@ -36,6 +39,13 @@ class UserAdapter (
         holder.email.text = user.email
         holder.username.text = user.username
         Glide.with(context).load(user.imgProfile).placeholder(R.drawable.ic_profile_img).into(holder.imgProfile)
+
+        holder.itemView.setOnClickListener {
+            val intent = Intent(context, ChatActivity::class.java)
+            intent.putExtra("uid", holder.uid.text)
+            Toast.makeText(context, "Has seleccionado al usuario: ${holder.username.text}" , Toast.LENGTH_SHORT).show()
+            context.startActivity(intent)
+        }
     }
 
         class ViewHolder(itemView : View) : RecyclerView.ViewHolder(itemView){
