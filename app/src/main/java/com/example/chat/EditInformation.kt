@@ -49,18 +49,15 @@ class EditInformation : AppCompatActivity() {
         progressDialog.setCanceledOnTouchOutside(false)
 
         loadInformation()
-
-        // Inicializa Firebase Remote Config
+        
         remoteConfig = FirebaseRemoteConfig.getInstance()
         val configSettings = FirebaseRemoteConfigSettings.Builder()
             .setMinimumFetchIntervalInSeconds(3600) // Actualización cada 1 hora
             .build()
         remoteConfig.setConfigSettingsAsync(configSettings)
 
-        // Valores predeterminados locales
-        remoteConfig.setDefaultsAsync(mapOf("show_button_premium" to false))
+        remoteConfig.setDefaultsAsync(mapOf("show_button_premium" to true))
 
-        // Obtén y aplica el valor de Remote Config
         fetchAndApplyRemoteConfig()
 
         binding.IbBack.setOnClickListener {
@@ -94,7 +91,6 @@ class EditInformation : AppCompatActivity() {
         remoteConfig.fetchAndActivate()
             .addOnCompleteListener { task ->
                 if (task.isSuccessful) {
-                    // Obtiene el valor de show_button_premium desde Remote Config
                     val showButtonPremium = remoteConfig.getBoolean("show_button_premium")
                     applyButtonVisibility(showButtonPremium)
                 }
@@ -104,8 +100,7 @@ class EditInformation : AppCompatActivity() {
     private fun applyButtonVisibility(isVisible: Boolean) {
         val premiumButton = findViewById<MaterialButton>(R.id.btn_premium)
 
-        // Controla la visibilidad del botón en base al valor booleano
-        premiumButton.visibility = if (isVisible) View.VISIBLE else View.GONE
+        premiumButton.visibility = if (isVisible) View.VISIBLE else View.GONE // Controla la visibilidad del botón en base al valor booleano
     }
 
     private fun initError() {
