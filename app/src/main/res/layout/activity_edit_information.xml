@@ -103,4 +103,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_premium"
+        android:layout_marginTop="10dp"
+        app:cornerRadius="8dp"
+        android:text="@string/btn_premium"
+        android:textAllCaps="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
 </androidx.appcompat.widget.LinearLayoutCompat>

@@ -13,6 +13,7 @@ import com.example.chat.R
 import com.example.chat.User
 import com.example.chat.UserAdapter
 import com.example.chat.databinding.FragmentUsersBinding
+import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -26,6 +27,7 @@ class UsersFragment : Fragment() {
     private lateinit var mContext : Context
     private var userAdapter : UserAdapter?= null
     private var userList : List<User>?= null
+    private lateinit var firebaseAnalytics: FirebaseAnalytics
 
 
     override fun onAttach(context: Context) {
@@ -35,6 +37,10 @@ class UsersFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         binding = FragmentUsersBinding.inflate(layoutInflater, container, false)
+
+        firebaseAnalytics = FirebaseAnalytics.getInstance(requireContext())
+
+        logFragmentVisit()
 
         binding.RVUsers.setHasFixedSize(true)
         binding.RVUsers.layoutManager = LinearLayoutManager(mContext)
@@ -58,6 +64,12 @@ class UsersFragment : Fragment() {
         listUsers()
 
         return binding.root
+    }
+
+    private fun logFragmentVisit() {
+        val bundle = Bundle()
+        bundle.putString("users_on_usersUI", "UsersFragment")
+        firebaseAnalytics.logEvent("fragment_visit", bundle)
     }
 
     private fun listUsers() {

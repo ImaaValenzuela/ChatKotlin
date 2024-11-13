@@ -10,6 +10,7 @@
 
     <string name="optionEmail">Continuar con Email</string>
     <string name="optionGoogle">Continuar con Google</string>
+    <string name="optionNumber">Continuar con Numero de Telefono</string>
 
     <string name="txt_login">Login</string>
     <string name="et_email">Correo Electronico</string>
@@ -40,6 +41,7 @@
 
     <string name="txt_title_edit">Editar informacion</string>
     <string name="btn_update">Actualizar</string>
+    <string name="btn_premium">Suscribirse a Premium</string>
 
     <string name="txt_recovery_pass">Recuperar Contraseña</string>
     <string name="txt_insert_email">Ingrese su email para el envio de las instrucciones de recuperacion</string>

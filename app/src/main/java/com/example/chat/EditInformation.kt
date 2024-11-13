@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -14,17 +15,23 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.bumptech.glide.Glide
 import com.example.chat.databinding.ActivityEditInformationBinding
+import com.google.android.material.button.MaterialButton
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.remoteconfig.FirebaseRemoteConfig
+import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 import com.google.firebase.storage.FirebaseStorage
 
 class EditInformation : AppCompatActivity() {
 
     private lateinit var binding : ActivityEditInformationBinding
     private lateinit var firebaseAuth: FirebaseAuth
+    private lateinit var crashlytics: FirebaseCrashlytics
+    private lateinit var remoteConfig: FirebaseRemoteConfig
     private lateinit var progressDialog: ProgressDialog
     private var imageUri : Uri? = null
 
@@ -35,12 +42,26 @@ class EditInformation : AppCompatActivity() {
         setContentView(binding.root)
 
         firebaseAuth = FirebaseAuth.getInstance()
+        crashlytics = FirebaseCrashlytics.getInstance()
 
         progressDialog = ProgressDialog(this)
         progressDialog.setTitle("Espere por favor")
         progressDialog.setCanceledOnTouchOutside(false)
 
         loadInformation()
+
+        // Inicializa Firebase Remote Config
+        remoteConfig = FirebaseRemoteConfig.getInstance()
+        val configSettings = FirebaseRemoteConfigSettings.Builder()
+            .setMinimumFetchIntervalInSeconds(3600) // Actualización cada 1 hora
+            .build()
+        remoteConfig.setConfigSettingsAsync(configSettings)
+
+        // Valores predeterminados locales
+        remoteConfig.setDefaultsAsync(mapOf("show_button_premium" to false))
+
+        // Obtén y aplica el valor de Remote Config
+        fetchAndApplyRemoteConfig()
 
         binding.IbBack.setOnClickListener {
             onBackPressedDispatcher.onBackPressed()
@@ -58,11 +79,46 @@ class EditInformation : AppCompatActivity() {
             validateInfo()
         }
 
+        binding.btnPremium.setOnClickListener {
+            initError()
+        }
+
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
             insets
         }
+    }
+
+    private fun fetchAndApplyRemoteConfig() {
+        remoteConfig.fetchAndActivate()
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    // Obtiene el valor de show_button_premium desde Remote Config
+                    val showButtonPremium = remoteConfig.getBoolean("show_button_premium")
+                    applyButtonVisibility(showButtonPremium)
+                }
+            }
+    }
+
+    private fun applyButtonVisibility(isVisible: Boolean) {
+        val premiumButton = findViewById<MaterialButton>(R.id.btn_premium)
+
+        // Controla la visibilidad del botón en base al valor booleano
+        premiumButton.visibility = if (isVisible) View.VISIBLE else View.GONE
+    }
+
+    private fun initError() {
+        val user = firebaseAuth.currentUser
+        if (user != null) {
+            crashlytics.setUserId(user.uid)
+        } else {
+            crashlytics.setUserId("usuario_no_autenticado")
+        }
+
+        crashlytics.log("Crash manual activado - Botón 2")
+        crashlytics.setCustomKey("user_action", "Second Crash")
+        throw IllegalStateException("Crash Manual: Botón 2 - Estado Ilegal")
     }
 
     private fun openGallery() {
