@@ -1,4 +1,4 @@
-package com.example.chat
+package com.example.chat.models
 
 class User {
     var uid : String = ""

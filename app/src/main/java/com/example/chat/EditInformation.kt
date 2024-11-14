@@ -49,7 +49,7 @@ class EditInformation : AppCompatActivity() {
         progressDialog.setCanceledOnTouchOutside(false)
 
         loadInformation()
-        
+
         remoteConfig = FirebaseRemoteConfig.getInstance()
         val configSettings = FirebaseRemoteConfigSettings.Builder()
             .setMinimumFetchIntervalInSeconds(3600) // Actualización cada 1 hora

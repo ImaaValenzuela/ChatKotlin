@@ -9,9 +9,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.chat.R
-import com.example.chat.User
-import com.example.chat.UserAdapter
+import com.example.chat.models.User
+import com.example.chat.adapters.UserAdapter
 import com.example.chat.databinding.FragmentUsersBinding
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.auth.FirebaseAuth
@@ -107,7 +106,7 @@ class UsersFragment : Fragment() {
             override fun onDataChange(snapshot: DataSnapshot) {
                 (userList as ArrayList<User>).clear()
                 for (ss in snapshot.children){
-                    val user : User ?= ss.getValue(User::class.java)
+                    val user : User?= ss.getValue(User::class.java)
                     if((user!!.uid) != firebaseUser){
                         (userList as ArrayList<User>).add(user)
                     }

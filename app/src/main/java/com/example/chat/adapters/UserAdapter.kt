@@ -1,4 +1,4 @@
-package com.example.chat
+package com.example.chat.adapters
 
 import android.content.Context
 import android.content.Intent
@@ -10,7 +10,9 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.chat.R
 import com.example.chat.chat.ChatActivity
+import com.example.chat.models.User
 
 class UserAdapter (
     context : Context,
