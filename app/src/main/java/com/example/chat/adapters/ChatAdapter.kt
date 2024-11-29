@@ -1,10 +1,13 @@
 package com.example.chat.adapters
 
 import android.content.Context
+import android.content.DialogInterface
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.chat.Const
@@ -12,12 +15,14 @@ import com.example.chat.R
 import com.example.chat.models.Chat
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 
 class ChatAdapter : RecyclerView.Adapter<ChatAdapter.HolderChat>{
 
     private val context : Context
     private val chatArray : ArrayList<Chat>
     private val firebaseAuth : FirebaseAuth
+    private var routeChat = ""
 
     companion object{
         private const val MESSAGE_LEFT = 0
@@ -65,6 +70,25 @@ class ChatAdapter : RecyclerView.Adapter<ChatAdapter.HolderChat>{
         if(typeMessage == Const.MESSAGE_TYPE_TEXT){
             holder.tv_message.visibility = View.VISIBLE
             holder.iv_message.visibility = View.GONE
+
+            holder.tv_message.text = message
+
+            if(modelChat.transmitterUid == firebaseAuth.uid){
+                holder.itemView.setOnClickListener {
+                    val options = arrayOf<CharSequence>("Eliminar mensaje", "Cancelar")
+                    val builder : AlertDialog.Builder = AlertDialog.Builder(holder.itemView.context)
+                    builder.setTitle("Que desea realizar?")
+                    builder.setItems(options, DialogInterface.OnClickListener{dialog, which ->
+                        if(which == 0){
+                            deleteMessage(position, holder, modelChat)
+                        }
+                    })
+
+                    builder.show()
+                }
+            }
+
+
         } else {
             holder.tv_message.visibility = View.GONE
             holder.iv_message.visibility = View.VISIBLE
@@ -78,7 +102,44 @@ class ChatAdapter : RecyclerView.Adapter<ChatAdapter.HolderChat>{
             } catch (e : Exception){
 
             }
+
+            if(modelChat.transmitterUid == firebaseAuth.uid){
+                holder.itemView.setOnClickListener {
+                    val options = arrayOf<CharSequence>("Eliminar imagen", "Cancelar")
+                    val builder : AlertDialog.Builder = AlertDialog.Builder(holder.itemView.context)
+                    builder.setTitle("Que desea realizar?")
+                    builder.setItems(options, DialogInterface.OnClickListener{dialog, which ->
+                        if(which == 0){
+                            deleteMessage(position, holder, modelChat)
+                        }
+                    })
+
+                    builder.show()
+                }
+            }
         }
+    }
+
+    private fun deleteMessage(position: Int, holder: HolderChat, modelChat: Chat) {
+        routeChat = Const.routeChat(modelChat.receiverUid, modelChat.transmitterUid)
+
+        val ref = FirebaseDatabase.getInstance().reference.child("Chats")
+        ref.child(routeChat).child(chatArray.get(position).idMessage)
+            .removeValue()
+            .addOnSuccessListener {
+                Toast.makeText(
+                    holder.itemView.context,
+                    "Se ha eliminado el mensaje",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(
+                    holder.itemView.context,
+                    "No se ha eliminado el mensaje debido a ${e}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
     }
 
     inner class HolderChat (itemView: View) : RecyclerView.ViewHolder(itemView){
