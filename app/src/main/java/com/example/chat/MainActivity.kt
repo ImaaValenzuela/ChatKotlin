@@ -11,6 +11,7 @@ import com.example.chat.fragments.ChatsFragment
 import com.example.chat.fragments.ProfileFragment
 import com.example.chat.fragments.UsersFragment
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 
 class MainActivity : AppCompatActivity() {
 
@@ -84,5 +85,23 @@ class MainActivity : AppCompatActivity() {
         val fragmentTransaction = supportFragmentManager.beginTransaction()
         fragmentTransaction.replace(binding.fragmentFL.id, fragment, "Fragment Chats")
         fragmentTransaction.commit()
+    }
+
+    private fun userStatus(status : String){
+        val ref = FirebaseDatabase.getInstance().getReference("Users").child(firebaseAuth.uid!!)
+
+        val hashMap = HashMap<String, Any>()
+        hashMap["status"] = status
+        ref!!.updateChildren(hashMap)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        userStatus("online")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        userStatus("offline")
     }
 }

@@ -130,7 +130,9 @@ class ChatActivity : AppCompatActivity() {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val name = "${snapshot.child("names").value}"
                     val image = "${snapshot.child("image").value}"
+                    val status = "${snapshot.child("status").value}"
 
+                    binding.txtStatus.text = status
                     binding.txtUserName.text = name
 
                     try {
@@ -248,5 +250,23 @@ class ChatActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
             }
+    }
+
+    private fun userStatus(status : String){
+        val ref = FirebaseDatabase.getInstance().getReference("Users").child(firebaseAuth.uid!!)
+
+        val hashMap = HashMap<String, Any>()
+        hashMap["status"] = status
+        ref!!.updateChildren(hashMap)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        userStatus("online")
+    }
+
+    override fun onPause() {
+        super.onPause()
+        userStatus("offline")
     }
 }
