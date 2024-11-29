@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="400dp"
+    android:layout_height="400dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="#ccc"
+    android:layout_gravity="center">
+    
+    <ImageView
+        android:id="@+id/PV_img"
+        android:scaleType="centerInside"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_close_visualizer"
+        android:text="@string/btn_close_visualizer"
+        android:textAllCaps="true"
+        app:cornerRadius="8dp"
+        android:layout_alignParentBottom="true"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+</RelativeLayout>

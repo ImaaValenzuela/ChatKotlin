@@ -1,10 +1,12 @@
 package com.example.chat.adapters
 
+import android.app.Dialog
 import android.content.Context
 import android.content.DialogInterface
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
@@ -13,6 +15,7 @@ import com.bumptech.glide.Glide
 import com.example.chat.Const
 import com.example.chat.R
 import com.example.chat.models.Chat
+import com.google.android.material.button.MaterialButton
 import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
@@ -47,6 +50,32 @@ class ChatAdapter : RecyclerView.Adapter<ChatAdapter.HolderChat>{
 
     override fun getItemCount(): Int {
         return  chatArray.size
+    }
+
+    private fun imageVisualizer(image: String) {
+        val iv: ImageView
+        val btnClose: MaterialButton
+
+        val dialog = Dialog(context)
+        dialog.setContentView(R.layout.dialog_visualizer_image)
+
+        iv = dialog.findViewById(R.id.PV_img)  // Cambiado de PhotoView a ImageView
+        btnClose = dialog.findViewById(R.id.btn_close_visualizer)
+
+        try {
+            Glide.with(context)
+                .load(image)
+                .placeholder(R.drawable.sub_img)
+                .into(iv)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        btnClose.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialog.show()
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -105,12 +134,27 @@ class ChatAdapter : RecyclerView.Adapter<ChatAdapter.HolderChat>{
 
             if(modelChat.transmitterUid == firebaseAuth.uid){
                 holder.itemView.setOnClickListener {
-                    val options = arrayOf<CharSequence>("Eliminar imagen", "Cancelar")
+                    val options = arrayOf<CharSequence>("Eliminar imagen", "Ver imagen", "Cancelar")
                     val builder : AlertDialog.Builder = AlertDialog.Builder(holder.itemView.context)
                     builder.setTitle("Que desea realizar?")
                     builder.setItems(options, DialogInterface.OnClickListener{dialog, which ->
                         if(which == 0){
                             deleteMessage(position, holder, modelChat)
+                        } else if (which == 1){
+                            imageVisualizer(modelChat.message)
+                        }
+                    })
+
+                    builder.show()
+                }
+            } else if(modelChat.transmitterUid != firebaseAuth.uid){
+                holder.itemView.setOnClickListener {
+                    val options = arrayOf<CharSequence>("Ver imagen", "Cancelar")
+                    val builder : AlertDialog.Builder = AlertDialog.Builder(holder.itemView.context)
+                    builder.setTitle("Que desea realizar?")
+                    builder.setItems(options, DialogInterface.OnClickListener{dialog, which ->
+                        if(which == 0){
+                            imageVisualizer(modelChat.message)
                         }
                     })
 
@@ -118,6 +162,7 @@ class ChatAdapter : RecyclerView.Adapter<ChatAdapter.HolderChat>{
                 }
             }
         }
+
     }
 
     private fun deleteMessage(position: Int, holder: HolderChat, modelChat: Chat) {
