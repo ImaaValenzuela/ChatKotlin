@@ -1,8 +1,8 @@
 package com.example.chat
 
-import android.app.ProgressDialog
 import android.os.Bundle
 import android.util.Patterns
+import android.view.View
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -13,9 +13,8 @@ import com.google.firebase.auth.FirebaseAuth
 
 class RecoverPassword : AppCompatActivity() {
 
-    private lateinit var binding : ActivityRecoverPasswordBinding
+    private lateinit var binding: ActivityRecoverPasswordBinding
     private lateinit var firebaseAuth: FirebaseAuth
-    private lateinit var progressDialog: ProgressDialog
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,6 +23,7 @@ class RecoverPassword : AppCompatActivity() {
         binding = ActivityRecoverPasswordBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Aplicar padding dinámico para el sistema de barras
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -32,57 +32,57 @@ class RecoverPassword : AppCompatActivity() {
 
         firebaseAuth = FirebaseAuth.getInstance()
 
-        progressDialog = ProgressDialog(this)
-        progressDialog.setTitle("Espere por favor")
-        progressDialog.setCanceledOnTouchOutside(false)
-
-        binding.IBBack.setOnClickListener{
+        // Acción para regresar a la pantalla anterior
+        binding.IBBack.setOnClickListener {
             onBackPressedDispatcher.onBackPressed()
         }
 
+        // Acción del botón para enviar el correo
         binding.btnSubmit.setOnClickListener {
             validateInfo()
         }
     }
 
-    private var email = ""
-
     private fun validateInfo() {
-        email = binding.etEmail.text.toString().trim()
+        val email = binding.etEmail.text.toString().trim()
 
-        if(email.isEmpty()){
-            binding.etEmail.error = "Ingrese su email"
-            binding.etEmail.requestFocus()
-        } else if(!Patterns.EMAIL_ADDRESS.matcher(email).matches()){
-            binding.etEmail.error = "Email no valido"
-            binding.etEmail.requestFocus()
-        } else{
-            sendInstructions()
+        when {
+            email.isEmpty() -> {
+                binding.etEmail.error = "Ingrese su email"
+                binding.etEmail.requestFocus()
+            }
+            !Patterns.EMAIL_ADDRESS.matcher(email).matches() -> {
+                binding.etEmail.error = "Email no válido"
+                binding.etEmail.requestFocus()
+            }
+            else -> sendInstructions(email)
         }
     }
 
-    private fun sendInstructions() {
-        progressDialog.setMessage("Enviando las instrucciones a ${email}")
-        progressDialog.show()
+    private fun sendInstructions(email: String) {
+        showLoading(true)
 
         firebaseAuth.sendPasswordResetEmail(email)
             .addOnSuccessListener {
-                progressDialog.dismiss()
-
+                showLoading(false)
                 Toast.makeText(
                     this,
-                    "Instrucciones enviadas con exito",
+                    "Instrucciones enviadas con éxito",
                     Toast.LENGTH_SHORT
                 ).show()
             }
-            .addOnFailureListener{ e ->
-                progressDialog.dismiss()
+            .addOnFailureListener { e ->
+                showLoading(false)
                 Toast.makeText(
                     this,
-                    "Fallo el envio de instrucciones debido a ${e.message}",
+                    "Fallo el envío de instrucciones debido a: ${e.message}",
                     Toast.LENGTH_SHORT
                 ).show()
-
             }
+    }
+
+    private fun showLoading(isLoading: Boolean) {
+        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
+        binding.btnSubmit.isEnabled = !isLoading
     }
 }

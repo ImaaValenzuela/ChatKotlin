@@ -1,13 +1,12 @@
 package com.example.chat.fragments
 
-import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.chat.models.User
 import com.example.chat.adapters.UserAdapter
@@ -21,44 +20,21 @@ import com.google.firebase.database.ValueEventListener
 
 class UsersFragment : Fragment() {
 
-    private lateinit var binding : FragmentUsersBinding
-
-    private lateinit var mContext : Context
-    private var userAdapter : UserAdapter?= null
-    private var userList : List<User>?= null
+    private lateinit var binding: FragmentUsersBinding
+    private var userAdapter: UserAdapter? = null
+    private var userList = ArrayList<User>()
     private lateinit var firebaseAnalytics: FirebaseAnalytics
 
-
-    override fun onAttach(context: Context) {
-        mContext = context
-        super.onAttach(context)
-    }
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        binding = FragmentUsersBinding.inflate(layoutInflater, container, false)
-
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View? {
+        binding = FragmentUsersBinding.inflate(inflater, container, false)
         firebaseAnalytics = FirebaseAnalytics.getInstance(requireContext())
 
         logFragmentVisit()
 
-        binding.RVUsers.setHasFixedSize(true)
-        binding.RVUsers.layoutManager = LinearLayoutManager(mContext)
-
-        userList = ArrayList()
-
-        binding.etSearchUser.addTextChangedListener(object : TextWatcher {
-            override fun beforeTextChanged(p0: CharSequence?, p1: Int, p2: Int, p3: Int) {
-
-            }
-
-            override fun onTextChanged(user: CharSequence?, p1: Int, p2: Int, p3: Int) {
-                searchUser(user.toString())
-            }
-
-            override fun afterTextChanged(p0: Editable?) {
-
-            }
-        })
+        setupRecyclerView()
+        setupSearchListener()
 
         listUsers()
 
@@ -66,58 +42,86 @@ class UsersFragment : Fragment() {
     }
 
     private fun logFragmentVisit() {
-        val bundle = Bundle()
-        bundle.putString("users_on_usersUI", "UsersFragment")
+        val bundle = Bundle().apply {
+            putString("users_on_usersUI", "UsersFragment")
+        }
         firebaseAnalytics.logEvent("fragment_visit", bundle)
+    }
+
+    private fun setupRecyclerView() {
+        binding.RVUsers.apply {
+            setHasFixedSize(true)
+            layoutManager = LinearLayoutManager(requireContext())
+        }
+    }
+
+    private fun setupSearchListener() {
+        binding.etSearchUser.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(charSequence: CharSequence?, start: Int, count: Int, after: Int) {}
+
+            override fun onTextChanged(charSequence: CharSequence?, start: Int, before: Int, count: Int) {
+                searchUser(charSequence.toString())
+            }
+
+            override fun afterTextChanged(editable: Editable?) {}
+        })
     }
 
     private fun listUsers() {
         val firebaseUser = FirebaseAuth.getInstance().currentUser!!.uid
         val ref = FirebaseDatabase.getInstance().reference.child("Users").orderByChild("names")
-        ref.addValueEventListener(object : ValueEventListener{
+
+        ref.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                (userList as ArrayList<User>).clear()
-                if(binding.etSearchUser.text.toString().isEmpty()){
-                    for(sn in snapshot.children){
-                        val user : User? = sn.getValue(User::class.java)
-                        if((user!!.uid) != firebaseUser){
-                            (userList as ArrayList<User>).add(user)
+                userList.clear()
+                if (binding.etSearchUser.text.toString().isEmpty()) {
+                    for (sn in snapshot.children) {
+                        val user = sn.getValue(User::class.java)
+                        user?.let {
+                            if (it.uid != firebaseUser) {
+                                userList.add(it)
+                            }
                         }
                     }
-
-                    userAdapter = UserAdapter(mContext, userList!!)
-                    binding.RVUsers.adapter = userAdapter
+                    updateRecyclerView()
                 }
             }
 
             override fun onCancelled(error: DatabaseError) {
-
+                // Handle cancellation (optional)
             }
         })
-
-
     }
 
-    private fun searchUser(user : String){
+    private fun searchUser(query: String) {
         val firebaseUser = FirebaseAuth.getInstance().currentUser!!.uid
-        val ref = FirebaseDatabase.getInstance().reference.child("Users").orderByChild("names")
-            .startAt(user).endAt(user+"\uf8ff")
-        ref.addValueEventListener(object : ValueEventListener{
+        val ref = FirebaseDatabase.getInstance().reference.child("Users")
+            .orderByChild("names")
+            .startAt(query)
+            .endAt("$query\uf8ff")
+
+        ref.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                (userList as ArrayList<User>).clear()
-                for (ss in snapshot.children){
-                    val user : User?= ss.getValue(User::class.java)
-                    if((user!!.uid) != firebaseUser){
-                        (userList as ArrayList<User>).add(user)
+                userList.clear()
+                for (ss in snapshot.children) {
+                    val user = ss.getValue(User::class.java)
+                    user?.let {
+                        if (it.uid != firebaseUser) {
+                            userList.add(it)
+                        }
                     }
                 }
-                userAdapter = UserAdapter(context!!, userList!!)
-                binding.RVUsers.adapter = userAdapter
+                updateRecyclerView()
             }
 
             override fun onCancelled(error: DatabaseError) {
-
+                // Handle cancellation (optional)
             }
         })
+    }
+
+    private fun updateRecyclerView() {
+        userAdapter = UserAdapter(requireContext(), userList)
+        binding.RVUsers.adapter = userAdapter
     }
 }

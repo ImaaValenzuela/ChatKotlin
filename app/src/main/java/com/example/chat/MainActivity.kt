@@ -26,10 +26,18 @@ class MainActivity : AppCompatActivity() {
 
         firebaseAuth = FirebaseAuth.getInstance()
 
-        if(firebaseAuth.currentUser == null) optionsLogin()
+        if (firebaseAuth.currentUser == null) {
+            optionsLogin()
+        }
 
+        // Aquí inicializamos el fragmento por defecto, que será el de Perfil
+        if (savedInstanceState == null) {
+            seeFragmentProfile()
+        }
+
+        // Configuración de la navegación por el BottomNavigationView
         binding.bottomNV.setOnItemSelectedListener { item ->
-            when(item.itemId){
+            when (item.itemId) {
                 R.id.item_profile -> {
                     seeFragmentProfile()
                     true
@@ -42,7 +50,7 @@ class MainActivity : AppCompatActivity() {
                     seeFragmentChats()
                     true
                 }
-                else ->{
+                else -> {
                     false
                 }
             }
@@ -69,7 +77,7 @@ class MainActivity : AppCompatActivity() {
         fragmentTransaction.commit()
     }
 
-    private fun seeFragmentUsers () {
+    private fun seeFragmentUsers() {
         binding.tvTitle.text = "Usuarios"
 
         val fragment = UsersFragment()
@@ -78,7 +86,7 @@ class MainActivity : AppCompatActivity() {
         fragmentTransaction.commit()
     }
 
-    private fun seeFragmentChats () {
+    private fun seeFragmentChats() {
         binding.tvTitle.text = "Chats"
 
         val fragment = ChatsFragment()
@@ -87,12 +95,12 @@ class MainActivity : AppCompatActivity() {
         fragmentTransaction.commit()
     }
 
-    private fun userStatus(status : String){
+    private fun userStatus(status: String) {
         val ref = FirebaseDatabase.getInstance().getReference("Users").child(firebaseAuth.uid!!)
 
         val hashMap = HashMap<String, Any>()
         hashMap["status"] = status
-        ref!!.updateChildren(hashMap)
+        ref.updateChildren(hashMap)
     }
 
     override fun onResume() {

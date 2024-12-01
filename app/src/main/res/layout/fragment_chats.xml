@@ -32,4 +32,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
+    <Button
+        android:id="@+id/retryButton"
+        android:text="@string/retry"
+        android:visibility="gone"
+        android:onClick="retryLoadChats"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:textColor="@android:color/white"
+        android:padding="10dp" />
+
 </androidx.appcompat.widget.LinearLayoutCompat>

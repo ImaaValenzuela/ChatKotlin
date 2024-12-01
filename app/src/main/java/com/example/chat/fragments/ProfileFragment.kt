@@ -1,13 +1,12 @@
 package com.example.chat.fragments
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.example.chat.ChangePassword
 import com.example.chat.Const
@@ -23,16 +22,12 @@ import com.google.firebase.database.ValueEventListener
 
 class ProfileFragment : Fragment() {
 
-    private lateinit var binding : FragmentProfileBinding
-    private lateinit var mContext : Context
+    private lateinit var binding: FragmentProfileBinding
     private lateinit var firebaseAuth: FirebaseAuth
 
-    override fun onAttach(context: Context) {
-        mContext = context
-        super.onAttach(context)
-    }
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+    ): View? {
         // Inflate the layout for this fragment
         binding = FragmentProfileBinding.inflate(layoutInflater, container, false)
         return binding.root
@@ -46,65 +41,58 @@ class ProfileFragment : Fragment() {
         loadInfo()
 
         binding.btnUpdateInfo.setOnClickListener {
-            startActivity(Intent(mContext, EditInformation::class.java))
+            startActivity(Intent(requireContext(), EditInformation::class.java))
         }
 
         binding.btnChangePass.setOnClickListener {
-            startActivity(Intent(mContext, ChangePassword::class.java))
+            startActivity(Intent(requireContext(), ChangePassword::class.java))
         }
 
         binding.btnLogout.setOnClickListener {
             firebaseAuth.signOut()
-            startActivity(Intent(mContext, OptionsLoginActivity::class.java))
-            activity?.finishAffinity()
+            startActivity(Intent(requireContext(), OptionsLoginActivity::class.java))
+            requireActivity().finishAffinity()
         }
     }
 
     private fun loadInfo() {
-        val ref = FirebaseDatabase.getInstance().getReference("Users")
-        ref.child("${firebaseAuth.uid}")
-            .addValueEventListener(object : ValueEventListener{
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val names = "${snapshot.child("names").value}"
-                    val email = "${snapshot.child("email").value}"
-                    val prov = "${snapshot.child("prov").value}"
-                    var time = "${snapshot.child("time").value}"
-                    val image = "${snapshot.child("image").value}"
+        val userRef = FirebaseDatabase.getInstance().getReference("Users").child(firebaseAuth.uid ?: "")
 
-                    if(time == "null"){
-                        time = "0"
-                    }
+        userRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val names = snapshot.child("names").value?.toString() ?: "N/A"
+                val email = snapshot.child("email").value?.toString() ?: "N/A"
+                val prov = snapshot.child("prov").value?.toString() ?: "N/A"
+                var time = snapshot.child("time").value?.toString() ?: "0"
+                val image = snapshot.child("image").value?.toString()
 
-                    val date = Const.dateFormat(time.toLong())
+                // Format time if it isn't null
+                val formattedTime = if (time == "null") "0" else time
+                val date = Const.dateFormat(formattedTime.toLong())
 
-                    binding.tvNames.text = names
-                    binding.tvEmail.text = email
-                    binding.tvProv.text = prov
-                    binding.tvTimeReg.text = date
+                // Set the values to the UI
+                binding.tvNames.text = names
+                binding.tvEmail.text = email
+                binding.tvProv.text = prov
+                binding.tvTimeReg.text = date
 
-
-                    try {
-                        Glide.with(mContext)
-                            .load(image)
-                            .placeholder(R.drawable.ic_img_profile)
-                            .into(binding.ivProfile)
-
-                    }catch (e:Exception){
-                        Toast.makeText(
-                            mContext,
-                            "${e.message}",
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-
-                    if(prov == "Email"){
-                        binding.btnChangePass.visibility = View.VISIBLE
-                    }
+                // Load profile image
+                image?.let {
+                    Glide.with(requireContext())
+                        .load(it)
+                        .placeholder(R.drawable.ic_img_profile)
+                        .into(binding.ivProfile)
+                } ?: run {
+                    binding.ivProfile.setImageResource(R.drawable.ic_img_profile)
                 }
 
-                override fun onCancelled(error: DatabaseError) {
-                    TODO("Not yet implemented")
-                }
-            })
+                // Show Change Password button if prov is "Email"
+                binding.btnChangePass.visibility = if (prov == "Email") View.VISIBLE else View.GONE
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Toast.makeText(requireContext(), "Error loading profile data", Toast.LENGTH_SHORT).show()
+            }
+        })
     }
 }

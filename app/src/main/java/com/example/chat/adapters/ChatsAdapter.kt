@@ -13,78 +13,60 @@ import com.example.chat.chat.ChatActivity
 import com.example.chat.databinding.ItemChatsBinding
 import com.example.chat.models.Chats
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.*
 
-class ChatsAdapter : RecyclerView.Adapter<ChatsAdapter.HolderChats>{
-    private var context : Context
-    private var chatArrayList : ArrayList<Chats>
-    private lateinit var binding : ItemChatsBinding
-    private lateinit var firebaseAuth: FirebaseAuth
-    private var miUid = ""
+class ChatsAdapter(
+    private val context: Context,
+    private val chatArrayList: ArrayList<Chats>
+) : RecyclerView.Adapter<ChatsAdapter.HolderChats>() {
 
-    constructor(context: Context, chatArrayList: ArrayList<Chats>) {
-        this.context = context
-        this.chatArrayList = chatArrayList
-        firebaseAuth = FirebaseAuth.getInstance()
-        miUid = firebaseAuth.uid!!
+    private val firebaseAuth = FirebaseAuth.getInstance()
+    private val miUid = firebaseAuth.uid!!
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HolderChats {
+        val binding = ItemChatsBinding.inflate(LayoutInflater.from(context), parent, false)
+        return HolderChats(binding)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatsAdapter.HolderChats {
-        binding = ItemChatsBinding.inflate(LayoutInflater.from(context), parent, false)
-        return HolderChats(binding.root)
-    }
-
-    override fun getItemCount(): Int {
-        return chatArrayList.size
-    }
+    override fun getItemCount(): Int = chatArrayList.size
 
     override fun onBindViewHolder(holder: HolderChats, position: Int) {
         val chatsModel = chatArrayList[position]
-
         loadLastMessage(chatsModel, holder)
 
         holder.itemView.setOnClickListener {
             val receiverUid = chatsModel.receiverUid
-            if( receiverUid!= null){
-                val intent = Intent(context, ChatActivity::class.java)
-                intent.putExtra("uid", receiverUid)
+            receiverUid?.let {
+                val intent = Intent(context, ChatActivity::class.java).apply {
+                    putExtra("uid", it)
+                }
                 context.startActivity(intent)
             }
         }
     }
 
     private fun loadLastMessage(chatsModel: Chats, holder: HolderChats) {
-        val chatKey = chatsModel.keyChat
-
         val ref = FirebaseDatabase.getInstance().getReference("Chats")
-        ref.child(chatKey).limitToLast(1)
+        ref.child(chatsModel.keyChat).limitToLast(1)
             .addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    for (ds in snapshot.children){
-                        val transmitterUid = "${ds.child("transmitterUid").value}"
-                        val messageId = "${ds.child("idMessage").value}"
-                        val message = "${ds.child("message").value}"
-                        val receiverUid = "${ds.child("receiverUid").value}"
+                    snapshot.children.forEach { ds ->
+                        val transmitterUid = ds.child("transmitterUid").value.toString()
+                        val message = ds.child("message").value.toString()
+                        val messageType = ds.child("typeMessage").value.toString()
                         val time = ds.child("time").value as Long
-                        val messageType = "${ds.child("typeMessage").value}"
 
-                        val dateFormat = Const.getDateHour(time)
+                        chatsModel.apply {
+                            this.transmittorUid = transmitterUid
+                            this.message = message
+                            this.typeMessage = messageType
+                        }
 
-                        chatsModel.transmittorUid = transmitterUid
-                        chatsModel.idMessage = messageId
-                        chatsModel.message = message
-                        chatsModel.receiverUid = receiverUid
-                        chatsModel.typeMessage = messageType
-
-                        holder.tvDate.text = dateFormat
-
-                        if(messageType == Const.MESSAGE_TYPE_TEXT){
-                            holder.tvLastMsg.text = message
+                        holder.tvDate.text = Const.getDateHour(time)
+                        holder.tvLastMsg.text = if (messageType == Const.MESSAGE_TYPE_TEXT) {
+                            message
                         } else {
-                            holder.tvLastMsg.text = "Se ha enviado una imagen"
+                            "Se ha enviado una imagen"
                         }
 
                         loadUserInfo(chatsModel, holder)
@@ -92,59 +74,48 @@ class ChatsAdapter : RecyclerView.Adapter<ChatsAdapter.HolderChats>{
                 }
 
                 override fun onCancelled(error: DatabaseError) {
-                    TODO("Not yet implemented")
+                    // Handle error if necessary
                 }
             })
     }
 
     private fun loadUserInfo(chatsModel: Chats, holder: HolderChats) {
-        val transmitterUid = chatsModel.transmittorUid
-        val receiverUid = chatsModel.uidReceiver
-
-        var uidReceiver = ""
-
-        if (transmitterUid == miUid){
-            uidReceiver = receiverUid
+        val uidReceiver = if (chatsModel.transmittorUid == miUid) {
+            chatsModel.receiverUid
         } else {
-            uidReceiver = transmitterUid
+            chatsModel.transmittorUid
         }
 
-        chatsModel.uidReceiver = uidReceiver
+        uidReceiver?.let {
+            val ref = FirebaseDatabase.getInstance().getReference("Users")
+            ref.child(it)
+                .addValueEventListener(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val name = snapshot.child("names").value.toString()
+                        val image = snapshot.child("image").value.toString()
 
-        val ref = FirebaseDatabase.getInstance().getReference("Users")
-        ref.child(uidReceiver)
-            .addValueEventListener(object : ValueEventListener{
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val name = "${snapshot.child("names")}"
-                    val image = "${snapshot.child("image")}"
+                        chatsModel.names = name
+                        chatsModel.image = image
 
-                    chatsModel.names = name
-                    chatsModel.image = image
+                        holder.tvNames.text = name
 
-                    holder.tvNames.text = name
-
-                    try {
                         Glide.with(context)
                             .load(image)
                             .placeholder(R.drawable.ic_profile_img)
                             .into(holder.IvProfile)
-                    }catch (e : Exception){
-
                     }
-                }
 
-                override fun onCancelled(error: DatabaseError) {
-                    TODO("Not yet implemented")
-                }
-            })
+                    override fun onCancelled(error: DatabaseError) {
+                        // Handle error if necessary
+                    }
+                })
+        }
     }
 
-    inner class HolderChats (itemView : View) : RecyclerView.ViewHolder(itemView){
-        var IvProfile = binding.IvProfile
-        var tvNames = binding.tvNames
-        var tvLastMsg = binding.tvLastMessage
-        var tvDate = binding.tvDate
+    inner class HolderChats(private val binding: ItemChatsBinding) : RecyclerView.ViewHolder(binding.root) {
+        val IvProfile = binding.IvProfile
+        val tvNames = binding.tvNames
+        val tvLastMsg = binding.tvLastMessage
+        val tvDate = binding.tvDate
     }
-
-
 }
