@@ -59,6 +59,7 @@ dependencies {
     implementation(libs.firebase.storage)
     implementation(libs.circleImage)
     implementation(libs.glide)
+    implementation (libs.firebase.messaging.ktx)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

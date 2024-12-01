@@ -2,6 +2,7 @@ package com.example.chat
 
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -12,6 +13,7 @@ import com.example.chat.fragments.ProfileFragment
 import com.example.chat.fragments.UsersFragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.messaging.FirebaseMessaging
 
 class MainActivity : AppCompatActivity() {
 
@@ -26,9 +28,8 @@ class MainActivity : AppCompatActivity() {
 
         firebaseAuth = FirebaseAuth.getInstance()
 
-        if (firebaseAuth.currentUser == null) {
-            optionsLogin()
-        }
+        checkSession()
+
 
         // Aquí inicializamos el fragmento por defecto, que será el de Perfil
         if (savedInstanceState == null) {
@@ -63,9 +64,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun optionsLogin() {
-        startActivity(Intent(applicationContext, OptionsLoginActivity::class.java))
-        finishAffinity()
+    private fun checkSession() {
+        if (firebaseAuth.currentUser == null){
+            startActivity(Intent(applicationContext, OptionsLoginActivity::class.java))
+            finishAffinity()
+        } else addToken()
     }
 
     private fun seeFragmentProfile() {
@@ -111,5 +114,28 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         userStatus("offline")
+    }
+
+    private fun addToken(){
+        val myUid = "${firebaseAuth.uid}"
+        FirebaseMessaging.getInstance().token
+            .addOnSuccessListener { fcmToken ->
+                val hashMap = HashMap<String, Any>()
+                hashMap["fcmToken"] = fcmToken
+                val ref = FirebaseDatabase.getInstance().getReference("Users")
+                ref.child(myUid)
+                    .updateChildren(hashMap)
+                    .addOnSuccessListener {
+                        // Se agrego con exito
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(this,"${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+
+
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(this,"${e.message}", Toast.LENGTH_SHORT).show()
+            }
     }
 }
