@@ -9,6 +9,21 @@
     android:orientation="vertical"
     tools:context=".EditInformation">
 
+    <!-- Barra de progreso (ProgressBar) -->
+    <RelativeLayout
+        android:id="@+id/progressLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        android:gravity="center">
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:indeterminate="true"/>
+    </RelativeLayout>
+
     <RelativeLayout
         android:id="@+id/toolbarRL"
         android:layout_width="match_parent"
@@ -32,30 +47,30 @@
             android:textSize="16sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"/>
-        
+
         <View
             android:background="#cccccc"
             android:layout_alignParentBottom="true"
             android:layout_width="match_parent"
             android:layout_height="1dp"/>
-        
+
     </RelativeLayout>
 
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="10dp">
-        
+
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-            
+
             <RelativeLayout
                 android:id="@+id/profileRL"
                 android:layout_centerHorizontal="true"
                 android:layout_width="120dp"
                 android:layout_height="120dp">
-                
+
                 <de.hdodenhof.circleimageview.CircleImageView
                     android:id="@+id/ivProfile"
                     android:src="@drawable/ic_img_profile"
@@ -73,6 +88,7 @@
             </RelativeLayout>
         </RelativeLayout>
     </ScrollView>
+
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/TILnames"
         android:padding="5dp"

@@ -1,12 +1,10 @@
 package com.example.chat
 
-import android.app.ProgressDialog
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
@@ -27,68 +25,50 @@ import com.google.firebase.remoteconfig.FirebaseRemoteConfigSettings
 
 class OptionsLoginActivity : AppCompatActivity() {
 
-    private lateinit var binding:ActivityOptionsLoginBinding
+    private lateinit var binding: ActivityOptionsLoginBinding
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var crashlytics: FirebaseCrashlytics
     private lateinit var remoteConfig: FirebaseRemoteConfig
     private lateinit var firebaseAnalytics: FirebaseAnalytics
-    private lateinit var progressDialog: ProgressDialog
-    private lateinit var mGoogleSignInCliente : GoogleSignInClient
+    private lateinit var googleSignInClient: GoogleSignInClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContentView(R.layout.activity_options_login)
 
         binding = ActivityOptionsLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        firebaseAuth = FirebaseAuth.getInstance()
-        crashlytics = FirebaseCrashlytics.getInstance()
-        remoteConfig = FirebaseRemoteConfig.getInstance()
-        firebaseAnalytics = FirebaseAnalytics.getInstance(this)
-
-        progressDialog = ProgressDialog(this)
-        progressDialog.setTitle("Espere por favor")
-        progressDialog.setCanceledOnTouchOutside(false)
-
-        val configSettings = FirebaseRemoteConfigSettings.Builder()
-            .setMinimumFetchIntervalInSeconds(3600)  // 1 hora
-            .build()
-        remoteConfig.setConfigSettingsAsync(configSettings)
-
-        remoteConfig.setDefaultsAsync(mapOf("button_color" to "#FF5733"))
-
-        fetchRemoteConfig()
-
-        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-            .requestIdToken(getString(R.string.default_web_client_id))
-            .requestEmail()
-            .build()
-
-        mGoogleSignInCliente = GoogleSignIn.getClient(this, gso)
-
-
+        initializeFirebase()
+        setupEdgeToEdge()
+        setupRemoteConfig()
+        initializeGoogleSignIn()
 
         checkSession()
 
         binding.optionEmail.setOnClickListener {
             logLoginEvent("email")
-            startActivity(Intent(applicationContext, LoginEmailActivity::class.java))
+            navigateToLoginActivity(LoginEmailActivity::class.java)
         }
 
         binding.optionGoogle.setOnClickListener {
             logLoginEvent("google")
-            initGoogle()
+            initGoogleSignIn()
         }
 
         binding.optionNumber.setOnClickListener {
             logLoginEvent("phone")
-            initError()
+            simulateCrash()
         }
+    }
 
+    private fun initializeFirebase() {
+        firebaseAuth = FirebaseAuth.getInstance()
+        crashlytics = FirebaseCrashlytics.getInstance()
+        remoteConfig = FirebaseRemoteConfig.getInstance()
+        firebaseAnalytics = FirebaseAnalytics.getInstance(this)
+    }
 
-
+    private fun setupEdgeToEdge() {
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -96,127 +76,125 @@ class OptionsLoginActivity : AppCompatActivity() {
         }
     }
 
-    private fun logLoginEvent(method: String) {
-        val bundle = Bundle()
-        bundle.putString("login_method", method)
-        firebaseAnalytics.logEvent("login_event", bundle)
-    }
+    private fun setupRemoteConfig() {
+        val configSettings = FirebaseRemoteConfigSettings.Builder()
+            .setMinimumFetchIntervalInSeconds(3600) // 1 hora
+            .build()
+        remoteConfig.setConfigSettingsAsync(configSettings)
 
-    private fun fetchRemoteConfig() {
-        remoteConfig.fetchAndActivate()
-            .addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    val buttonColor = remoteConfig.getString("button_color")
-                    applyButtonColor(buttonColor)
-                }
+        remoteConfig.setDefaultsAsync(mapOf("button_color" to "#FF5733"))
+
+        remoteConfig.fetchAndActivate().addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                val buttonColor = remoteConfig.getString("button_color")
+                applyButtonColor(buttonColor)
             }
-    }
-
-    private fun applyButtonColor(colorHex: String) {
-
-        val optionEmailButton = findViewById<MaterialButton>(R.id.optionEmail)
-        val optionGoogleButton = findViewById<MaterialButton>(R.id.optionGoogle)
-        val optionNumberButton = findViewById<MaterialButton>(R.id.optionNumber)
-
-        try {
-            val color = Color.parseColor(colorHex)
-            optionEmailButton.setBackgroundColor(color)
-            optionGoogleButton.setBackgroundColor(color)
-            optionNumberButton.setBackgroundColor(color)
-        } catch (e: IllegalArgumentException) {
-            // Manejo de errores por si el color no es válido, aprovecho crashlytics (consultar si el uso es correcto)
-            FirebaseCrashlytics.getInstance().log("Invalid color format in Remote Config: $colorHex")
-            FirebaseCrashlytics.getInstance().recordException(e)
         }
     }
 
-    private fun initError() {
-        crashlytics.log("Crash manual activado - Botón 1")
-        throw RuntimeException("Crash Manual: Botón 1")
+    private fun applyButtonColor(colorHex: String) {
+        try {
+            val color = Color.parseColor(colorHex)
+            listOf(binding.optionEmail, binding.optionGoogle, binding.optionNumber).forEach { button ->
+                button.setBackgroundColor(color)
+            }
+        } catch (e: IllegalArgumentException) {
+            crashlytics.log("Invalid color format in Remote Config: $colorHex")
+            crashlytics.recordException(e)
+        }
     }
 
-    private fun initGoogle() {
-        val googleSignInIntent = mGoogleSignInCliente.signInIntent
+    private fun initializeGoogleSignIn() {
+        val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+            .requestIdToken(getString(R.string.default_web_client_id))
+            .requestEmail()
+            .build()
+
+        googleSignInClient = GoogleSignIn.getClient(this, gso)
+    }
+
+    private fun initGoogleSignIn() {
+        val googleSignInIntent = googleSignInClient.signInIntent
         googleSignInARL.launch(googleSignInIntent)
     }
 
     private val googleSignInARL = registerForActivityResult(
-        ActivityResultContracts.StartActivityForResult()){ res ->
-        if ( res.resultCode == RESULT_OK){
-            val data = res.data
-
-            val task = GoogleSignIn.getSignedInAccountFromIntent(data)
-
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
             try {
                 val account = task.getResult(ApiException::class.java)
-                authAccountGoogle(account.idToken)
-            }catch (e : Exception){
-                Toast.makeText(this,
-                    "${e.message}",
-                    Toast.LENGTH_SHORT).show()
+                account?.idToken?.let { authWithGoogle(it) }
+            } catch (e: Exception) {
+                Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
             }
         } else {
-            Toast.makeText(this,
-                "Cancelado",
-                Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Sign-in canceled", Toast.LENGTH_SHORT).show()
         }
     }
 
-    private fun authAccountGoogle(idToken: String?) {
+    private fun authWithGoogle(idToken: String) {
         val credential = GoogleAuthProvider.getCredential(idToken, null)
         firebaseAuth.signInWithCredential(credential)
             .addOnSuccessListener { resAuth ->
-                if(resAuth.additionalUserInfo!!.isNewUser){
+                if (resAuth.additionalUserInfo?.isNewUser == true) {
                     updateUserInfo()
                 } else {
-                    startActivity(Intent(this, MainActivity::class.java))
-                    finishAffinity()
+                    navigateToMainActivity()
                 }
             }
             .addOnFailureListener { e ->
-                Toast.makeText(this,
-                    "${e.message}",
-                    Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
             }
     }
 
     private fun updateUserInfo() {
-        progressDialog.setMessage("Guardando informacion")
+        val uid = firebaseAuth.uid ?: return
+        val user = firebaseAuth.currentUser
+        val userData = mapOf(
+            "uid" to uid,
+            "names" to (user?.displayName ?: ""),
+            "email" to (user?.email ?: ""),
+            "time" to System.currentTimeMillis().toString(),
+            "prov" to "Google",
+            "status" to "online",
+            "image" to ""
+        )
 
-        val uidU = firebaseAuth.uid
-        val namesU = firebaseAuth.currentUser!!.displayName
-        val emailU = firebaseAuth.currentUser!!.email
-        val timeR = Const.getTimeD()
-
-        val dataUser = HashMap<String, Any>()
-
-        dataUser["uid"] = "$uidU"
-        dataUser["names"] = "$namesU"
-        dataUser["email"] = "$emailU"
-        dataUser["time"] = "$timeR"
-        dataUser["prov"] = "Google"
-        dataUser["status"] = "online"
-        dataUser["image"] = ""
-
-        val reference = FirebaseDatabase.getInstance().getReference("Users")
-        reference.child(uidU!!)
-            .setValue(dataUser)
+        FirebaseDatabase.getInstance().getReference("Users").child(uid)
+            .setValue(userData)
             .addOnSuccessListener {
-                progressDialog.dismiss()
-
-                startActivity(Intent(applicationContext, MainActivity::class.java))
-                finishAffinity()
+                navigateToMainActivity()
             }
-            .addOnFailureListener {
-                    e-> progressDialog.dismiss()
-                Toast.makeText(this, "Fallo la creacion de la cuenta debido a ${e.message}", Toast.LENGTH_SHORT).show()
+            .addOnFailureListener { e ->
+                Toast.makeText(this, "Error creating account: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
 
-    private fun checkSession(){
-        if(firebaseAuth.currentUser != null){
-            startActivity(Intent(this, MainActivity::class.java))
-            finishAffinity()
+    private fun checkSession() {
+        if (firebaseAuth.currentUser != null) {
+            navigateToMainActivity()
         }
+    }
+
+    private fun simulateCrash() {
+        crashlytics.log("Manual crash triggered - Button")
+        throw RuntimeException("Manual crash triggered")
+    }
+
+    private fun navigateToMainActivity() {
+        startActivity(Intent(this, MainActivity::class.java))
+        finishAffinity()
+    }
+
+    private fun navigateToLoginActivity(activityClass: Class<*>) {
+        startActivity(Intent(this, activityClass))
+    }
+
+    private fun logLoginEvent(method: String) {
+        firebaseAnalytics.logEvent("login_event", Bundle().apply {
+            putString("login_method", method)
+        })
     }
 }

@@ -20,7 +20,7 @@
             android:background="@android:color/transparent"
             android:src="@drawable/ic_back"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content" />
 
         <de.hdodenhof.circleimageview.CircleImageView
             android:id="@+id/toolbarIV"
@@ -29,7 +29,7 @@
             android:layout_toStartOf="@+id/txt_user_name"
             android:src="@drawable/user_profile"
             android:layout_width="40dp"
-            android:layout_height="40dp"/>
+            android:layout_height="40dp" />
 
         <TextView
             android:id="@+id/txt_user_name"
@@ -37,8 +37,8 @@
             android:layout_centerInParent="true"
             android:textStyle="bold"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        
+            android:layout_height="wrap_content" />
+
         <TextView
             android:id="@+id/txt_status"
             android:layout_below="@+id/txt_user_name"
@@ -46,16 +46,15 @@
             android:layout_centerInParent="true"
             android:textSize="12sp"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"/>
-        
+            android:layout_height="wrap_content" />
+
         <View
             android:background="#ccc"
             android:layout_alignParentBottom="true"
             android:layout_width="match_parent"
-            android:layout_height="1dp"/>
-
+            android:layout_height="1dp" />
     </RelativeLayout>
-    
+
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/chatsRV"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
@@ -63,7 +62,7 @@
         android:layout_above="@id/View2"
         android:padding="5dp"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 
     <RelativeLayout
         android:id="@+id/RLmessage"
@@ -80,7 +79,7 @@
             android:layout_toStartOf="@+id/adjFAB"
             android:layout_marginEnd="5dp"
             android:padding="10dp"
-            android:inputType="textMultiLine|textCapSentences"/>
+            android:inputType="textMultiLine|textCapSentences" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/adjFAB"
@@ -92,7 +91,7 @@
             android:src="@drawable/ic_img_chat"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:backgroundTint="#CCCCCC"/>
+            app:backgroundTint="#CCCCCC" />
 
         <com.google.android.material.floatingactionbutton.FloatingActionButton
             android:id="@+id/sendFAB"
@@ -103,8 +102,7 @@
             app:fabSize="mini"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            app:backgroundTint="#CCCCCC"/>
-
+            app:backgroundTint="#CCCCCC" />
     </RelativeLayout>
 
     <View
@@ -112,7 +110,14 @@
         android:background="#ccc"
         android:layout_above="@+id/RLmessage"
         android:layout_width="match_parent"
-        android:layout_height="1dp"/>
+        android:layout_height="1dp" />
 
-    
+    <!-- ProgressBar añadido -->
+    <ProgressBar
+        android:id="@+id/progressBar"
+        style="@android:style/Widget.DeviceDefault.Light.ProgressBar.Large"
+        android:visibility="gone"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true" />
 </RelativeLayout>

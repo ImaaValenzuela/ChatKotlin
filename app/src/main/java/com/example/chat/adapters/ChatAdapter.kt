@@ -2,7 +2,6 @@ package com.example.chat.adapters
 
 import android.app.Dialog
 import android.content.Context
-import android.content.DialogInterface
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -20,178 +19,135 @@ import com.google.android.material.imageview.ShapeableImageView
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 
-class ChatAdapter : RecyclerView.Adapter<ChatAdapter.HolderChat>{
+class ChatAdapter(private val context: Context, private val chatArray: ArrayList<Chat>) :
+    RecyclerView.Adapter<ChatAdapter.HolderChat>() {
 
-    private val context : Context
-    private val chatArray : ArrayList<Chat>
-    private val firebaseAuth : FirebaseAuth
-    private var routeChat = ""
+    private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
 
-    companion object{
+    companion object {
         private const val MESSAGE_LEFT = 0
         private const val MESSAGE_RIGHT = 1
     }
 
-    constructor(context: Context, chatArray: ArrayList<Chat>) {
-        this.context = context
-        this.chatArray = chatArray
-        firebaseAuth = FirebaseAuth.getInstance()
-    }
-
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HolderChat {
-        return if(viewType == MESSAGE_RIGHT){
-            val view = LayoutInflater.from(context).inflate(R.layout.item_chat_right, parent, false)
-            HolderChat(view)
-        } else{
-            val view = LayoutInflater.from(context).inflate(R.layout.item_chat_left, parent, false)
-            HolderChat(view)
-        }
+        val layoutId = if (viewType == MESSAGE_RIGHT) R.layout.item_chat_right else R.layout.item_chat_left
+        val view = LayoutInflater.from(context).inflate(layoutId, parent, false)
+        return HolderChat(view)
     }
 
-    override fun getItemCount(): Int {
-        return  chatArray.size
-    }
-
-    private fun imageVisualizer(image: String) {
-        val iv: ImageView
-        val btnClose: MaterialButton
-
-        val dialog = Dialog(context)
-        dialog.setContentView(R.layout.dialog_visualizer_image)
-
-        iv = dialog.findViewById(R.id.PV_img)  // Cambiado de PhotoView a ImageView
-        btnClose = dialog.findViewById(R.id.btn_close_visualizer)
-
-        try {
-            Glide.with(context)
-                .load(image)
-                .placeholder(R.drawable.sub_img)
-                .into(iv)
-        } catch (e: Exception) {
-            e.printStackTrace()
-        }
-
-        btnClose.setOnClickListener {
-            dialog.dismiss()
-        }
-
-        dialog.show()
-    }
+    override fun getItemCount(): Int = chatArray.size
 
     override fun getItemViewType(position: Int): Int {
-        if(chatArray[position].transmitterUid == firebaseAuth.uid){
-            return MESSAGE_RIGHT
-        } else{
-            return MESSAGE_LEFT
-        }
+        return if (chatArray[position].transmitterUid == firebaseAuth.uid) MESSAGE_RIGHT else MESSAGE_LEFT
     }
 
     override fun onBindViewHolder(holder: HolderChat, position: Int) {
         val modelChat = chatArray[position]
-
         val message = modelChat.message
         val typeMessage = modelChat.typeMessage
         val time = modelChat.time
+        val dateFormat = Const.getDateHour(time)
 
-        val date_format = Const.getDateHour(time)
-        holder.tv_time_message.text = date_format
+        holder.tv_time_message.text = dateFormat
 
-        if(typeMessage == Const.MESSAGE_TYPE_TEXT){
-            holder.tv_message.visibility = View.VISIBLE
-            holder.iv_message.visibility = View.GONE
-
-            holder.tv_message.text = message
-
-            if(modelChat.transmitterUid == firebaseAuth.uid){
-                holder.itemView.setOnClickListener {
-                    val options = arrayOf<CharSequence>("Eliminar mensaje", "Cancelar")
-                    val builder : AlertDialog.Builder = AlertDialog.Builder(holder.itemView.context)
-                    builder.setTitle("Que desea realizar?")
-                    builder.setItems(options, DialogInterface.OnClickListener{dialog, which ->
-                        if(which == 0){
-                            deleteMessage(position, holder, modelChat)
-                        }
-                    })
-
-                    builder.show()
-                }
+        if (typeMessage == Const.MESSAGE_TYPE_TEXT) {
+            holder.tv_message.apply {
+                visibility = View.VISIBLE
+                text = message
             }
-
-
+            holder.iv_message.visibility = View.GONE
+            setTextMessageClickListener(holder, position, modelChat)
         } else {
             holder.tv_message.visibility = View.GONE
             holder.iv_message.visibility = View.VISIBLE
+            loadImage(holder.iv_message, message)
+            setImageMessageClickListener(holder, position, modelChat)
+        }
+    }
 
-            try {
-                Glide.with(context)
-                    .load(message)
-                    .placeholder(R.drawable.sub_img)
-                    .error(R.drawable.error_img)
-                    .into(holder.iv_message)
-            } catch (e : Exception){
+    private fun loadImage(imageView: ImageView, imageUrl: String) {
+        runCatching {
+            Glide.with(context)
+                .load(imageUrl)
+                .placeholder(R.drawable.sub_img)
+                .error(R.drawable.error_img)
+                .into(imageView)
+        }.onFailure {
+            // Manejo del error (opcional)
+        }
+    }
 
-            }
-
-            if(modelChat.transmitterUid == firebaseAuth.uid){
-                holder.itemView.setOnClickListener {
-                    val options = arrayOf<CharSequence>("Eliminar imagen", "Ver imagen", "Cancelar")
-                    val builder : AlertDialog.Builder = AlertDialog.Builder(holder.itemView.context)
-                    builder.setTitle("Que desea realizar?")
-                    builder.setItems(options, DialogInterface.OnClickListener{dialog, which ->
-                        if(which == 0){
-                            deleteMessage(position, holder, modelChat)
-                        } else if (which == 1){
-                            imageVisualizer(modelChat.message)
-                        }
-                    })
-
-                    builder.show()
-                }
-            } else if(modelChat.transmitterUid != firebaseAuth.uid){
-                holder.itemView.setOnClickListener {
-                    val options = arrayOf<CharSequence>("Ver imagen", "Cancelar")
-                    val builder : AlertDialog.Builder = AlertDialog.Builder(holder.itemView.context)
-                    builder.setTitle("Que desea realizar?")
-                    builder.setItems(options, DialogInterface.OnClickListener{dialog, which ->
-                        if(which == 0){
-                            imageVisualizer(modelChat.message)
-                        }
-                    })
-
-                    builder.show()
-                }
+    private fun setTextMessageClickListener(holder: HolderChat, position: Int, modelChat: Chat) {
+        if (modelChat.transmitterUid == firebaseAuth.uid) {
+            holder.itemView.setOnClickListener {
+                showOptionsDialog(holder, position, modelChat)
             }
         }
+    }
 
+    private fun setImageMessageClickListener(holder: HolderChat, position: Int, modelChat: Chat) {
+        holder.itemView.setOnClickListener {
+            val options = if (modelChat.transmitterUid == firebaseAuth.uid) {
+                arrayOf("Eliminar imagen", "Ver imagen", "Cancelar")
+            } else {
+                arrayOf("Ver imagen", "Cancelar")
+            }
+            showImageOptionsDialog(holder, options, position, modelChat)
+        }
+    }
+
+    private fun showOptionsDialog(holder: HolderChat, position: Int, modelChat: Chat) {
+        val options = arrayOf<CharSequence>("Eliminar mensaje", "Cancelar")
+        AlertDialog.Builder(holder.itemView.context)
+            .setTitle("¿Qué deseas realizar?")
+            .setItems(options) { _, which ->
+                if (which == 0) deleteMessage(position, holder, modelChat)
+            }
+            .show()
+    }
+
+    private fun showImageOptionsDialog(holder: HolderChat, options: Array<String>, position: Int, modelChat: Chat) {
+        AlertDialog.Builder(holder.itemView.context)
+            .setTitle("¿Qué deseas realizar?")
+            .setItems(options) { _, which ->
+                when (which) {
+                    0 -> deleteMessage(position, holder, modelChat)
+                    1 -> imageVisualizer(modelChat.message)
+                }
+            }
+            .show()
+    }
+
+    private fun imageVisualizer(image: String) {
+        val dialog = Dialog(context).apply {
+            setContentView(R.layout.dialog_visualizer_image)
+        }
+
+        val iv: ImageView = dialog.findViewById(R.id.PV_img)
+        val btnClose: MaterialButton = dialog.findViewById(R.id.btn_close_visualizer)
+
+        loadImage(iv, image)
+
+        btnClose.setOnClickListener { dialog.dismiss() }
+        dialog.show()
     }
 
     private fun deleteMessage(position: Int, holder: HolderChat, modelChat: Chat) {
-        routeChat = Const.routeChat(modelChat.receiverUid, modelChat.transmitterUid)
-
-        val ref = FirebaseDatabase.getInstance().reference.child("Chats")
-        ref.child(routeChat).child(chatArray.get(position).idMessage)
+        val routeChat = Const.routeChat(modelChat.receiverUid, modelChat.transmitterUid)
+        FirebaseDatabase.getInstance().reference.child("Chats")
+            .child(routeChat).child(chatArray[position].idMessage)
             .removeValue()
             .addOnSuccessListener {
-                Toast.makeText(
-                    holder.itemView.context,
-                    "Se ha eliminado el mensaje",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(holder.itemView.context, "Se ha eliminado el mensaje", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener { e ->
-                Toast.makeText(
-                    holder.itemView.context,
-                    "No se ha eliminado el mensaje debido a ${e}",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(holder.itemView.context, "No se ha eliminado el mensaje debido a: $e", Toast.LENGTH_SHORT).show()
             }
     }
 
-    inner class HolderChat (itemView: View) : RecyclerView.ViewHolder(itemView){
-        var tv_message : TextView = itemView.findViewById(R.id.tv_msg)
-        var iv_message : ShapeableImageView = itemView.findViewById(R.id.iv_msg)
-        var tv_time_message : TextView = itemView.findViewById(R.id.tv_time_msg
-        )
+    inner class HolderChat(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val tv_message: TextView = itemView.findViewById(R.id.tv_msg)
+        val iv_message: ShapeableImageView = itemView.findViewById(R.id.iv_msg)
+        val tv_time_message: TextView = itemView.findViewById(R.id.tv_time_msg)
     }
-
 }

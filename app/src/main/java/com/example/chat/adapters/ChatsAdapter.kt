@@ -3,7 +3,6 @@ package com.example.chat.adapters
 import android.content.Context
 import android.content.Intent
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -13,138 +12,95 @@ import com.example.chat.chat.ChatActivity
 import com.example.chat.databinding.ItemChatsBinding
 import com.example.chat.models.Chats
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.google.firebase.database.*
 
-class ChatsAdapter : RecyclerView.Adapter<ChatsAdapter.HolderChats>{
-    private var context : Context
-    private var chatArrayList : ArrayList<Chats>
-    private lateinit var binding : ItemChatsBinding
-    private lateinit var firebaseAuth: FirebaseAuth
-    private var miUid = ""
+class ChatsAdapter(
+    private val context: Context,
+    private val chatArrayList: ArrayList<Chats>
+) : RecyclerView.Adapter<ChatsAdapter.HolderChats>() {
 
-    constructor(context: Context, chatArrayList: ArrayList<Chats>) {
-        this.context = context
-        this.chatArrayList = chatArrayList
-        firebaseAuth = FirebaseAuth.getInstance()
-        miUid = firebaseAuth.uid!!
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HolderChats {
+        val binding = ItemChatsBinding.inflate(LayoutInflater.from(context), parent, false)
+        return HolderChats(binding)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatsAdapter.HolderChats {
-        binding = ItemChatsBinding.inflate(LayoutInflater.from(context), parent, false)
-        return HolderChats(binding.root)
-    }
-
-    override fun getItemCount(): Int {
-        return chatArrayList.size
-    }
+    override fun getItemCount(): Int = chatArrayList.size
 
     override fun onBindViewHolder(holder: HolderChats, position: Int) {
         val chatsModel = chatArrayList[position]
-
         loadLastMessage(chatsModel, holder)
 
         holder.itemView.setOnClickListener {
             val receiverUid = chatsModel.receiverUid
-            if( receiverUid!= null){
-                val intent = Intent(context, ChatActivity::class.java)
-                intent.putExtra("uid", receiverUid)
+            if (receiverUid != null) {
+                val intent = Intent(context, ChatActivity::class.java).apply {
+                    putExtra("uid", receiverUid)
+                }
                 context.startActivity(intent)
             }
         }
     }
 
     private fun loadLastMessage(chatsModel: Chats, holder: HolderChats) {
-        val chatKey = chatsModel.keyChat
+        val ref = FirebaseDatabase.getInstance().getReference("Chats").child(chatsModel.keyChat)
+        ref.limitToLast(1).addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                snapshot.children.forEach { ds ->
+                    chatsModel.transmittorUid = ds.child("transmitterUid").value.toString()
+                    chatsModel.message = ds.child("message").value.toString()
+                    chatsModel.typeMessage = ds.child("typeMessage").value.toString()
+                    val time = ds.child("time").value as Long
 
-        val ref = FirebaseDatabase.getInstance().getReference("Chats")
-        ref.child(chatKey).limitToLast(1)
-            .addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    for (ds in snapshot.children){
-                        val transmitterUid = "${ds.child("transmitterUid").value}"
-                        val messageId = "${ds.child("idMessage").value}"
-                        val message = "${ds.child("message").value}"
-                        val receiverUid = "${ds.child("receiverUid").value}"
-                        val time = ds.child("time").value as Long
-                        val messageType = "${ds.child("typeMessage").value}"
-
-                        val dateFormat = Const.getDateHour(time)
-
-                        chatsModel.transmittorUid = transmitterUid
-                        chatsModel.idMessage = messageId
-                        chatsModel.message = message
-                        chatsModel.receiverUid = receiverUid
-                        chatsModel.typeMessage = messageType
-
-                        holder.tvDate.text = dateFormat
-
-                        if(messageType == Const.MESSAGE_TYPE_TEXT){
-                            holder.tvLastMsg.text = message
-                        } else {
-                            holder.tvLastMsg.text = "Se ha enviado una imagen"
-                        }
-
-                        loadUserInfo(chatsModel, holder)
+                    holder.tvDate.text = Const.getDateHour(time)
+                    holder.tvLastMsg.text = if (chatsModel.typeMessage == Const.MESSAGE_TYPE_TEXT) {
+                        chatsModel.message
+                    } else {
+                        "Se ha enviado una imagen"
                     }
-                }
 
-                override fun onCancelled(error: DatabaseError) {
-                    TODO("Not yet implemented")
+                    loadUserInfo(chatsModel, holder)
                 }
-            })
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                FirebaseCrashlytics.getInstance().log("Error loading last message: ${error.message}")
+                FirebaseCrashlytics.getInstance().recordException(error.toException())
+            }
+        })
     }
 
     private fun loadUserInfo(chatsModel: Chats, holder: HolderChats) {
-        val transmitterUid = chatsModel.transmittorUid
-        val receiverUid = chatsModel.uidReceiver
-
-        var uidReceiver = ""
-
-        if (transmitterUid == miUid){
-            uidReceiver = receiverUid
+        val uidReceiver = if (chatsModel.transmittorUid == FirebaseAuth.getInstance().uid) {
+            chatsModel.receiverUid
         } else {
-            uidReceiver = transmitterUid
+            chatsModel.transmittorUid
         }
 
-        chatsModel.uidReceiver = uidReceiver
+        val ref = FirebaseDatabase.getInstance().getReference("Users").child(uidReceiver ?: return)
+        ref.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val name = snapshot.child("names").value?.toString() ?: "Usuario desconocido"
+                val image = snapshot.child("image").value?.toString() ?: ""
 
-        val ref = FirebaseDatabase.getInstance().getReference("Users")
-        ref.child(uidReceiver)
-            .addValueEventListener(object : ValueEventListener{
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val name = "${snapshot.child("names")}"
-                    val image = "${snapshot.child("image")}"
+                holder.tvNames.text = name
+                Glide.with(context)
+                    .load(image)
+                    .placeholder(R.drawable.ic_profile_img)
+                    .into(holder.ivProfile)
+            }
 
-                    chatsModel.names = name
-                    chatsModel.image = image
-
-                    holder.tvNames.text = name
-
-                    try {
-                        Glide.with(context)
-                            .load(image)
-                            .placeholder(R.drawable.ic_profile_img)
-                            .into(holder.IvProfile)
-                    }catch (e : Exception){
-
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    TODO("Not yet implemented")
-                }
-            })
+            override fun onCancelled(error: DatabaseError) {
+                FirebaseCrashlytics.getInstance().log("Error loading user info: ${error.message}")
+                FirebaseCrashlytics.getInstance().recordException(error.toException())
+            }
+        })
     }
 
-    inner class HolderChats (itemView : View) : RecyclerView.ViewHolder(itemView){
-        var IvProfile = binding.IvProfile
-        var tvNames = binding.tvNames
-        var tvLastMsg = binding.tvLastMessage
-        var tvDate = binding.tvDate
+    inner class HolderChats(binding: ItemChatsBinding) : RecyclerView.ViewHolder(binding.root) {
+        val ivProfile = binding.IvProfile
+        val tvNames = binding.tvNames
+        val tvLastMsg = binding.tvLastMessage
+        val tvDate = binding.tvDate
     }
-
-
 }

@@ -14,54 +14,44 @@ import com.example.chat.R
 import com.example.chat.chat.ChatActivity
 import com.example.chat.models.User
 
-class UserAdapter (
-    context : Context,
-    userList : List<User>) : RecyclerView.Adapter<UserAdapter.ViewHolder?>(){
-
-        private val context : Context
-        private val userList : List<User>
-
-        init {
-            this.context = context
-            this.userList = userList
-        }
+class UserAdapter(
+    private val context: Context,
+    private val userList: List<User>
+) : RecyclerView.Adapter<UserAdapter.ViewHolder>() {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
-        val view : View = LayoutInflater.from(context).inflate(R.layout.item_user, parent, false)
+        val view: View = LayoutInflater.from(context).inflate(R.layout.item_user, parent, false)
         return ViewHolder(view)
     }
 
-    override fun getItemCount(): Int {
-        return userList.size
-    }
+    override fun getItemCount(): Int = userList.size
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val user : User = userList[position]
-        holder.uid.text = user.uid
-        holder.email.text = user.email
-        holder.username.text = user.username
-        Glide.with(context).load(user.imgProfile).placeholder(R.drawable.ic_profile_img).into(holder.imgProfile)
+        val user = userList[position]
+        holder.apply {
+            // Establecer los valores de las vistas
+            username.text = user.username
+            email.text = user.email
+            // Si la imagen está disponible, se carga; si no, se muestra un ícono por defecto
+            Glide.with(context)
+                .load(user.imgProfile)
+                .placeholder(R.drawable.ic_profile_img)
+                .into(imgProfile)
 
-        holder.itemView.setOnClickListener {
-            val intent = Intent(context, ChatActivity::class.java)
-            intent.putExtra("uid", holder.uid.text)
-            Toast.makeText(context, "Has seleccionado al usuario: ${holder.username.text}" , Toast.LENGTH_SHORT).show()
-            context.startActivity(intent)
+            itemView.setOnClickListener {
+                val intent = Intent(context, ChatActivity::class.java).apply {
+                    putExtra("uid", user.uid) // Pasa el UID del usuario seleccionado
+                }
+                Toast.makeText(context, "Has seleccionado al usuario: ${user.username}", Toast.LENGTH_SHORT).show()
+                context.startActivity(intent)
+            }
         }
     }
 
-        class ViewHolder(itemView : View) : RecyclerView.ViewHolder(itemView){
-            var uid : TextView
-            var email : TextView
-            var username : TextView
-            var imgProfile : ImageView
-
-            init {
-                uid = itemView.findViewById(R.id.item_uid)
-                email = itemView.findViewById(R.id.item_email)
-                username = itemView.findViewById(R.id.item_username)
-                imgProfile = itemView.findViewById(R.id.item_img)
-            }
-        }
-
+    class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        val uid: TextView = itemView.findViewById(R.id.item_uid)
+        val email: TextView = itemView.findViewById(R.id.item_email)
+        val username: TextView = itemView.findViewById(R.id.item_username)
+        val imgProfile: ImageView = itemView.findViewById(R.id.item_img)
+    }
 }
