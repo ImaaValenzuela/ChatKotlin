@@ -34,7 +34,7 @@ class ChatsFragment : Fragment() {
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         binding = FragmentChatsBinding.inflate(inflater, container, false)
         return binding.root
     }
@@ -47,14 +47,14 @@ class ChatsFragment : Fragment() {
         // Verificar si el usuario está autenticado
         myUid = firebaseAuth.uid ?: ""
         if (myUid.isEmpty()) {
-            // Usuario no autenticado, redirigir a la pantalla de inicio de sesión
-            FirebaseAuth.getInstance().signOut() // En caso de que haya alguna sesión activa
+            FirebaseAuth.getInstance().signOut()
             val loginIntent = Intent(requireContext(), OptionsLoginActivity::class.java)
             startActivity(loginIntent)
-            requireActivity().finish() // Finaliza esta actividad para evitar volver a esta pantalla
+            requireActivity().finish()
             return
         }
 
+        FirebaseCrashlytics.getInstance().setUserId(myUid) // Asigna el ID del usuario
         loadChats()
     }
 
@@ -75,26 +75,20 @@ class ChatsFragment : Fragment() {
 
                 adapterChats = ChatsAdapter(mContext, chatsArrayList)
                 binding.chatsRV.adapter = adapterChats
-                binding.retryButton.visibility = View.GONE // Ocultar el botón de reintento si la carga fue exitosa
+                binding.retryButton.visibility = View.GONE
             }
 
             override fun onCancelled(error: DatabaseError) {
-                // Enviar el error a Crashlytics para monitoreo
                 FirebaseCrashlytics.getInstance().log("Error loading chats: ${error.message}")
                 FirebaseCrashlytics.getInstance().recordException(error.toException())
-
-                // Mostrar un mensaje de error al usuario
                 Toast.makeText(requireContext(), "Failed to load chats: ${error.message}", Toast.LENGTH_LONG).show()
-
-                // Mostrar el botón de reintento
                 binding.retryButton.visibility = View.VISIBLE
             }
         })
     }
 
-    // Función para reintentar cargar los chats en caso de error
     fun retryLoadChats(view: View) {
-        binding.retryButton.visibility = View.GONE // Ocultar el botón de reintento
-        loadChats() // Volver a intentar cargar los chats
+        binding.retryButton.visibility = View.GONE
+        loadChats()
     }
 }

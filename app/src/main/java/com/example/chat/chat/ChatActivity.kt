@@ -1,11 +1,11 @@
 package com.example.chat.chat
 
 import android.app.Activity
-import android.app.ProgressDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -25,7 +25,6 @@ class ChatActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityChatBinding
     private lateinit var firebaseAuth: FirebaseAuth
-    private lateinit var progressDialog: ProgressDialog
 
     private var uid = "" // uid del receptor
     private var miUid = "" // uid del emisor
@@ -34,34 +33,49 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityChatBinding.inflate(layoutInflater)
-        setContentView(binding.root)
 
-        firebaseAuth = FirebaseAuth.getInstance()
-        progressDialog = ProgressDialog(this).apply {
-            setTitle("Espere por favor")
-            setCanceledOnTouchOutside(false)
+        try {
+            binding = ActivityChatBinding.inflate(layoutInflater)
+            setContentView(binding.root)
+
+            firebaseAuth = FirebaseAuth.getInstance()
+
+            uid = intent.getStringExtra("uid") ?: ""
+            if (uid.isEmpty()) {
+                showError("UID no válido, cerrando la aplicación.")
+                finish()
+                return
+            }
+
+            miUid = firebaseAuth.uid.orEmpty()
+            chatRoute = Const.routeChat(uid, miUid)
+
+            FirebaseCrashlytics.getInstance().apply {
+                setUserId(uid)
+                setCustomKey("Device_Model", Build.MODEL)
+            }
+
+            setupListeners()
+            loadInfo()
+            loadMessages()
+        } catch (e: Exception) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            showError("Error inesperado: ${e.message}")
+            finish()
         }
-
-        uid = intent.getStringExtra("uid") ?: ""
-        miUid = firebaseAuth.uid.orEmpty()
-
-        FirebaseCrashlytics.getInstance().setUserId(uid) // Configurar ID de usuario y modelo de dispositivo en Crashlytics
-        FirebaseCrashlytics.getInstance().setCustomKey("Device_Model", Build.MODEL)
-
-        chatRoute = Const.routeChat(uid, miUid)
-
-        setupListeners()
-        loadInfo()
-        loadMessages()
     }
 
     private fun setupListeners() {
         binding.adjFAB.setOnClickListener {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                galleryImage()
-            } else {
-                reqStoragePermission.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    galleryImage()
+                } else {
+                    reqStoragePermission.launch(android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                }
+            } catch (e: Exception) {
+                FirebaseCrashlytics.getInstance().recordException(e)
+                showError("Error al abrir la galería: ${e.message}")
             }
         }
 
@@ -77,24 +91,31 @@ class ChatActivity : AppCompatActivity() {
     private fun loadMessages() {
         val messageArrayList = ArrayList<Chat>()
         val ref = FirebaseDatabase.getInstance().getReference("Chats")
+
         ref.child(chatRoute).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                messageArrayList.clear()
-                snapshot.children.forEach { ds ->
-                    ds.getValue(Chat::class.java)?.let { chat ->
-                        messageArrayList.add(chat)
+                try {
+                    messageArrayList.clear()
+                    snapshot.children.forEach { ds ->
+                        ds.getValue(Chat::class.java)?.let { chat ->
+                            messageArrayList.add(chat)
+                        }
                     }
-                }
 
-                val adapterChat = ChatAdapter(this@ChatActivity, messageArrayList)
-                binding.chatsRV.adapter = adapterChat
-                binding.chatsRV.layoutManager = LinearLayoutManager(this@ChatActivity).apply {
-                    stackFromEnd = true
+                    val adapterChat = ChatAdapter(this@ChatActivity, messageArrayList)
+                    binding.chatsRV.adapter = adapterChat
+                    binding.chatsRV.layoutManager = LinearLayoutManager(this@ChatActivity).apply {
+                        stackFromEnd = true
+                    }
+                } catch (e: Exception) {
+                    FirebaseCrashlytics.getInstance().recordException(e)
+                    showError("Error al cargar los mensajes: ${e.message}")
                 }
             }
 
             override fun onCancelled(error: DatabaseError) {
                 FirebaseCrashlytics.getInstance().recordException(error.toException())
+                showError("Error en la base de datos: ${error.message}")
             }
         })
     }
@@ -112,43 +133,60 @@ class ChatActivity : AppCompatActivity() {
 
     private fun loadInfo() {
         val ref = FirebaseDatabase.getInstance().getReference("Users")
+
         ref.child(uid).addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val name = snapshot.child("names").value.toString()
-                val image = snapshot.child("image").value.toString()
-                val status = snapshot.child("status").value.toString()
+                try {
+                    val name = snapshot.child("names").value.toString()
+                    val image = snapshot.child("image").value.toString()
+                    val status = snapshot.child("status").value.toString()
 
-                binding.txtStatus.text = status
-                binding.txtUserName.text = name
+                    binding.txtStatus.text = status
+                    binding.txtUserName.text = name
 
-                Glide.with(this@ChatActivity)
-                    .load(image)
-                    .placeholder(R.drawable.user_profile)
-                    .into(binding.toolbarIV)
+                    Glide.with(this@ChatActivity)
+                        .load(image)
+                        .placeholder(R.drawable.user_profile)
+                        .into(binding.toolbarIV)
+                } catch (e: Exception) {
+                    FirebaseCrashlytics.getInstance().recordException(e)
+                    showError("Error al cargar la información del usuario: ${e.message}")
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
                 FirebaseCrashlytics.getInstance().recordException(error.toException())
+                showError("Error en la base de datos: ${error.message}")
             }
         })
     }
 
     private fun galleryImage() {
-        val intent = Intent(Intent.ACTION_PICK).apply { type = "image/*" }
-        resultGalleryARL.launch(intent)
+        try {
+            val intent = Intent(Intent.ACTION_PICK).apply { type = "image/*" }
+            resultGalleryARL.launch(intent)
+        } catch (e: Exception) {
+            FirebaseCrashlytics.getInstance().recordException(e)
+            showError("Error al abrir la galería: ${e.message}")
+        }
     }
 
     private val resultGalleryARL =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
-            if (res.resultCode == Activity.RESULT_OK) {
-                res.data?.data?.let { uri ->
-                    imageUri = uri
-                    subStorageImage()
-                } ?: run {
-                    showError("Ocurrió un error al seleccionar la imagen")
+            try {
+                if (res.resultCode == Activity.RESULT_OK) {
+                    res.data?.data?.let { uri ->
+                        imageUri = uri
+                        subStorageImage()
+                    } ?: run {
+                        showError("Error al seleccionar la imagen.")
+                    }
+                } else {
+                    showError("Selección de imagen cancelada.")
                 }
-            } else {
-                showError("Cancelado")
+            } catch (e: Exception) {
+                FirebaseCrashlytics.getInstance().recordException(e)
+                showError("Error al manejar la imagen seleccionada: ${e.message}")
             }
         }
 
@@ -157,34 +195,40 @@ class ChatActivity : AppCompatActivity() {
             if (isGranted) {
                 galleryImage()
             } else {
-                showError("El permiso de almacenamiento no fue concedido")
+                showError("El permiso de almacenamiento no fue concedido.")
             }
         }
 
     private fun subStorageImage() {
-        progressDialog.setMessage("Subiendo Imagen")
-        progressDialog.show()
+        if (imageUri == null) {
+            showError("No se seleccionó ninguna imagen.")
+            return
+        }
 
+        binding.progressBar.visibility = View.VISIBLE
         val time = Const.getTimeD()
         val routeNameImage = "chatImages/$time"
         val storageRef = FirebaseStorage.getInstance().getReference(routeNameImage)
+
         storageRef.putFile(imageUri!!).addOnSuccessListener { taskSnapshot ->
             taskSnapshot.storage.downloadUrl.addOnSuccessListener { uri ->
                 sendMessage(Const.MESSAGE_TYPE_IMAGE, uri.toString(), time)
             }.addOnFailureListener { e ->
-                showError("Error al obtener URL de la imagen: ${e.message}")
+                FirebaseCrashlytics.getInstance().recordException(e)
+                showError("Error al obtener la URL de la imagen: ${e.message}")
             }
         }.addOnFailureListener { e ->
-            showError("No se pudo enviar la imagen debido a: ${e.message}")
+            FirebaseCrashlytics.getInstance().recordException(e)
+            showError("Error al subir la imagen: ${e.message}")
+        }.addOnCompleteListener {
+            binding.progressBar.visibility = View.GONE
         }
     }
 
     private fun sendMessage(messageTypeText: String, message: String, time: Long) {
-        progressDialog.setMessage("Enviando Mensaje")
-        progressDialog.show()
-
         val refChat = FirebaseDatabase.getInstance().getReference("Chats")
         val keyId = refChat.push().key.orEmpty()
+
         val hashMap = hashMapOf(
             "idMessage" to keyId,
             "typeMessage" to messageTypeText,
@@ -196,12 +240,11 @@ class ChatActivity : AppCompatActivity() {
 
         refChat.child(chatRoute).child(keyId).setValue(hashMap)
             .addOnSuccessListener {
-                progressDialog.dismiss()
                 binding.etMsgChat.setText("")
             }
             .addOnFailureListener { e ->
-                progressDialog.dismiss()
-                showError("No se pudo enviar el mensaje debido a: ${e.message}")
+                FirebaseCrashlytics.getInstance().recordException(e)
+                showError("Error al enviar el mensaje: ${e.message}")
             }
     }
 
@@ -210,25 +253,12 @@ class ChatActivity : AppCompatActivity() {
         FirebaseCrashlytics.getInstance().log(message)
     }
 
-    private fun userStatus(status : String) {
-        val userId = firebaseAuth.uid
-        if (userId != null) {
-            val ref = FirebaseDatabase.getInstance().getReference("Users").child(userId)
-            val hashMap = HashMap<String, Any>()
-            hashMap["status"] = status
+    private fun userStatus(status: String) {
+        val userId = firebaseAuth.uid ?: return
+        val ref = FirebaseDatabase.getInstance().getReference("Users").child(userId)
 
-            // Usamos el método updateChildren para actualizar el estado del usuario
-            ref.updateChildren(hashMap).addOnCompleteListener { task ->
-                if (task.isSuccessful) {
-                    // Actualización exitosa
-                    FirebaseCrashlytics.getInstance().log("Status updated to: $status")
-                } else {
-                    // En caso de error, registrar el error
-                    FirebaseCrashlytics.getInstance().recordException(task.exception ?: Exception("Unknown error"))
-                }
-            }
-        } else {
-            FirebaseCrashlytics.getInstance().log("User not authenticated.")
+        ref.updateChildren(mapOf("status" to status)).addOnFailureListener { e ->
+            FirebaseCrashlytics.getInstance().recordException(e)
         }
     }
 

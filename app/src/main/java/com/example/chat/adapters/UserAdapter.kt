@@ -29,9 +29,10 @@ class UserAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val user = userList[position]
         holder.apply {
-            uid.text = user.uid
-            email.text = user.email
+            // Establecer los valores de las vistas
             username.text = user.username
+            email.text = user.email
+            // Si la imagen está disponible, se carga; si no, se muestra un ícono por defecto
             Glide.with(context)
                 .load(user.imgProfile)
                 .placeholder(R.drawable.ic_profile_img)
@@ -39,7 +40,7 @@ class UserAdapter(
 
             itemView.setOnClickListener {
                 val intent = Intent(context, ChatActivity::class.java).apply {
-                    putExtra("uid", user.uid) // Se pasa el UID directamente
+                    putExtra("uid", user.uid) // Pasa el UID del usuario seleccionado
                 }
                 Toast.makeText(context, "Has seleccionado al usuario: ${user.username}", Toast.LENGTH_SHORT).show()
                 context.startActivity(intent)

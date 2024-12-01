@@ -60,6 +60,8 @@ class ProfileFragment : Fragment() {
 
         userRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
+                if (!isAdded) return // Verifica si el fragmento sigue adjunto
+
                 val names = snapshot.child("names").value?.toString() ?: "N/A"
                 val email = snapshot.child("email").value?.toString() ?: "N/A"
                 val prov = snapshot.child("prov").value?.toString() ?: "N/A"
@@ -78,10 +80,12 @@ class ProfileFragment : Fragment() {
 
                 // Load profile image
                 image?.let {
-                    Glide.with(requireContext())
-                        .load(it)
-                        .placeholder(R.drawable.ic_img_profile)
-                        .into(binding.ivProfile)
+                    if (isAdded) { // Verifica de nuevo antes de usar Glide
+                        Glide.with(requireContext())
+                            .load(it)
+                            .placeholder(R.drawable.ic_img_profile)
+                            .into(binding.ivProfile)
+                    }
                 } ?: run {
                     binding.ivProfile.setImageResource(R.drawable.ic_img_profile)
                 }
@@ -91,8 +95,11 @@ class ProfileFragment : Fragment() {
             }
 
             override fun onCancelled(error: DatabaseError) {
-                Toast.makeText(requireContext(), "Error loading profile data", Toast.LENGTH_SHORT).show()
+                if (isAdded) {
+                    Toast.makeText(requireContext(), "Error loading profile data", Toast.LENGTH_SHORT).show()
+                }
             }
         })
     }
+
 }

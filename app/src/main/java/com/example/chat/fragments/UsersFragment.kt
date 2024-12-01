@@ -17,6 +17,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.crashlytics.FirebaseCrashlytics
 
 class UsersFragment : Fragment() {
 
@@ -24,6 +25,7 @@ class UsersFragment : Fragment() {
     private var userAdapter: UserAdapter? = null
     private var userList = ArrayList<User>()
     private lateinit var firebaseAnalytics: FirebaseAnalytics
+    private var usersListener: ValueEventListener? = null // Variable para almacenar el listener
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -71,26 +73,38 @@ class UsersFragment : Fragment() {
         val firebaseUser = FirebaseAuth.getInstance().currentUser!!.uid
         val ref = FirebaseDatabase.getInstance().reference.child("Users").orderByChild("names")
 
-        ref.addValueEventListener(object : ValueEventListener {
+        usersListener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                userList.clear()
-                if (binding.etSearchUser.text.toString().isEmpty()) {
-                    for (sn in snapshot.children) {
-                        val user = sn.getValue(User::class.java)
-                        user?.let {
-                            if (it.uid != firebaseUser) {
-                                userList.add(it)
+                try {
+                    userList.clear()
+                    if (binding.etSearchUser.text.toString().isEmpty()) {
+                        for (sn in snapshot.children) {
+                            val user = sn.getValue(User::class.java)
+                            user?.let {
+                                if (it.uid != firebaseUser) {
+                                    userList.add(it)
+                                }
                             }
                         }
+                        updateRecyclerView()
                     }
-                    updateRecyclerView()
+                } catch (e: Exception) {
+                    FirebaseCrashlytics.getInstance().log("Error in onDataChange")
+                    FirebaseCrashlytics.getInstance().recordException(e)
                 }
             }
 
             override fun onCancelled(error: DatabaseError) {
-                // Handle cancellation (optional)
+                try {
+                    FirebaseCrashlytics.getInstance().log("Firebase database read cancelled")
+                    FirebaseCrashlytics.getInstance().recordException(Exception("Database read cancelled: ${error.message}"))
+                } catch (e: Exception) {
+                    FirebaseCrashlytics.getInstance().log("Error in onCancelled")
+                    FirebaseCrashlytics.getInstance().recordException(e)
+                }
             }
-        })
+        }
+        ref.addValueEventListener(usersListener!!)
     }
 
     private fun searchUser(query: String) {
@@ -102,20 +116,31 @@ class UsersFragment : Fragment() {
 
         ref.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                userList.clear()
-                for (ss in snapshot.children) {
-                    val user = ss.getValue(User::class.java)
-                    user?.let {
-                        if (it.uid != firebaseUser) {
-                            userList.add(it)
+                try {
+                    userList.clear()
+                    for (ss in snapshot.children) {
+                        val user = ss.getValue(User::class.java)
+                        user?.let {
+                            if (it.uid != firebaseUser) {
+                                userList.add(it)
+                            }
                         }
                     }
+                    updateRecyclerView()
+                } catch (e: Exception) {
+                    FirebaseCrashlytics.getInstance().log("Error in searchUser")
+                    FirebaseCrashlytics.getInstance().recordException(e)
                 }
-                updateRecyclerView()
             }
 
             override fun onCancelled(error: DatabaseError) {
-                // Handle cancellation (optional)
+                try {
+                    FirebaseCrashlytics.getInstance().log("Firebase database search cancelled")
+                    FirebaseCrashlytics.getInstance().recordException(Exception("Search cancelled: ${error.message}"))
+                } catch (e: Exception) {
+                    FirebaseCrashlytics.getInstance().log("Error in onCancelled in searchUser")
+                    FirebaseCrashlytics.getInstance().recordException(e)
+                }
             }
         })
     }
@@ -123,5 +148,12 @@ class UsersFragment : Fragment() {
     private fun updateRecyclerView() {
         userAdapter = UserAdapter(requireContext(), userList)
         binding.RVUsers.adapter = userAdapter
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        usersListener?.let {
+            FirebaseDatabase.getInstance().reference.removeEventListener(it)
+        }
     }
 }
